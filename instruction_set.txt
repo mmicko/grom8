@@ -1,0 +1,70 @@
+opcodes
+
+76543210 76543210
+0000
+
+0001xxxx xxxxxxxx  
+0010xxxx xxxxxxxx  
+1111xxxx xxxxxxxx  JMP
+
+
+IR - Instruction register (8 bit)
+PC - Program counter   (12 bit)
+SEG - Segment register (4 bit only used)
+R0-R3 - registers      (8 bit)
+
+
+0000 dst src 		MOV dest, src  
+		
+0001 00  reg 		CLR reg			 set to 0
+0001 01  reg 		INC reg            increment
+0001 10  reg 		DEC reg            decrement 
+0001 11  reg 		NOT reg            logical not
+		
+0010 00  reg 		ADD reg			   r0 + reg
+0010 01  reg 		SUB reg			   r0 - reg
+0010 10  reg 		AND reg            r0 and reg
+0010 11  reg 		OR  reg            r0 or reg
+
+0011 00  reg 		XOR reg            r0 xor reg
+0011 01  reg       CMP reg            r0 - reg flags only
+0011 10  reg 		TEST reg		   r0 and reg  flags only
+0011 11  reg        XNOR reg 			r0 xor (not reg)
+
+0100 00 00         SHL 
+0100 00 01         SHR 
+0100 00 10         SAL 
+0100 00 11         SAR 
+
+0100 01 00         ROL
+0100 01 01         ROR 
+0100 01 10         RCL              rotate with carry
+0100 01 11         RCR    		     rotate with carry
+
+0101 dest src	   LOAD dest, [src]
+
+0110 dest src      STORE [dest], src
+
+0111 00 reg   MOV SEG, reg
+0111 01 reg   MOV reg, SEG
+
+0111 10 xx    CLR SEG
+0111 11 xx    HLT
+
+============================================================
+
+1000 JMP  (unconditionally jump) 
+1001 JC  (carry=1 jump) 
+1010 JNC (carry=0 jump) 
+1011 JM  (sign=1 jump) 
+1100 JP  (sign=0 jump) 
+1101 JZ  (zero=1 jump) 
+1110 JNZ (zero=0 jump) 
+
+1111 00 reg  val  MOV reg, val
+1111 01 reg  val  MOV reg, [val]
+1111 10 reg  val  MOV [val], reg
+
+1111 11 00  port  IN  port  (R0 read)
+1111 11 01  port  OUT port  (R0 to output)
+1111 11 1x  val   MOV SEG, val
