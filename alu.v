@@ -7,19 +7,56 @@ module alu(
 	output reg Z,
 	output reg S
 );
-
-	parameter ALU_OP_SET = 4'b0000;
-	parameter ALU_OP_NOT = 4'b0001;
-	parameter ALU_OP_ADD = 4'b0010;
-	parameter ALU_OP_SUB = 4'b0011;
 	
-	always @(*)
+	parameter ALU_OP_ADD = 5'b00000;
+	parameter ALU_OP_SUB = 5'b00001;
+	parameter ALU_OP_ADC = 5'b00010;
+	parameter ALU_OP_SBC = 5'b00011;
+
+	parameter ALU_OP_AND = 5'b00100;
+	parameter ALU_OP_OR  = 5'b00101;
+	parameter ALU_OP_NOT = 5'b00110;
+	parameter ALU_OP_XOR = 5'b00111;
+
+	parameter ALU_OP_INC = 5'b01000;
+	parameter ALU_OP_DEC = 5'b01001;
+	parameter ALU_OP_CMP = 5'b01010;
+	parameter ALU_OP_TST = 5'b01011;
+
+	parameter ALU_OP_CLR = 5'b01110;
+	parameter ALU_OP_SET = 5'b01111;
+
+	parameter ALU_OP_SHL = 5'b10000; 
+	parameter ALU_OP_SHR = 5'b10001; 
+	parameter ALU_OP_SAL = 5'b10010; 
+	parameter ALU_OP_SAR = 5'b10011; 
+
+	parameter ALU_OP_ROL = 5'b10100;
+	parameter ALU_OP_ROR = 5'b10101; 
+	parameter ALU_OP_RCL = 5'b10110;
+	parameter ALU_OP_RCR = 5'b10111;
+
+
+	always @(*)          
 	begin
 		case (operation)
+			ALU_OP_CLR :
+				begin
+					result = 8'h00;
+				end
 			ALU_OP_SET :
 				begin
-					result = B;
+					result = 8'hff;
 				end
+			ALU_OP_INC :
+				begin
+					result = B + 1;
+				end
+			ALU_OP_DEC :
+				begin
+					result = B - 1;
+				end
+				
 			ALU_OP_NOT :
 				begin
 					result = ~A;

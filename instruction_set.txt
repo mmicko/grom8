@@ -16,30 +16,35 @@ R0-R3 - registers      (8 bit)
 
 0000 dst src 		MOV dest, src  
 		
-0001 00  reg 		CLR reg			 set to 0
-0001 01  reg 		NOT reg            logical not
-0001 10  reg 		INC reg            increment
-0001 11  reg 		DEC reg            decrement 
-		
-0010 00  reg 		ADD reg			   r0 + reg
-0010 01  reg 		SUB reg			   r0 - reg
-0010 10  reg 		AND reg            r0 and reg
-0010 11  reg 		OR  reg            r0 or reg
 
-0011 00  reg 		XOR reg            r0 xor reg
-0011 01  reg       CMP reg            r0 - reg flags only
-0011 10  reg 		TEST reg		   r0 and reg  flags only
-0011 11  reg        XNOR reg 			r0 xor (not reg)
+0001 00  reg        ADD reg    r0 = r0 + reg
+0001 01  reg        SUB reg    r0 = r0 - reg
+0001 10  reg        ADC reg    r0 = r0 + reg + C
+0001 11  reg        SBC reg    r0 = r0 - reg - C
+		            
+0010 00  reg        AND reg    r0 = r0 and reg
+0010 01  reg        OR  reg    r0 = r0 or reg
+0010 10  reg        NOT reg    r0 = not reg
+0010 11  reg        XOR reg    r0 = r0 xor reg
+                    
+0011 00  reg        INC reg    reg = reg + 1 
+0011 01  reg        DEC reg    reg = reg - 1
+0011 10  reg        CMP reg    flags of r0 - reg
+0011 11  reg        TST reg    flags of r0 and reg
 
-0100 00 00         SHL 
-0100 00 01         SHR 
-0100 00 10         SAL 
-0100 00 11         SAR 
+0100 00 00          SHL 
+0100 00 01          SHR 
+0100 00 10          SAL 
+0100 00 11          SAR 
+                   
+0100 01 00          ROL
+0100 01 01          ROR 
+0100 01 10          RCL              rotate with carry
+0100 01 11          RCR    		     rotate with carry
+                   
+0100 10 reg         CLR reg     reg = 0x00
+0100 11 reg         SET reg     reg = 0xff
 
-0100 01 00         ROL
-0100 01 01         ROR 
-0100 01 10         RCL              rotate with carry
-0100 01 11         RCR    		     rotate with carry
 
 0101 dest src	   LOAD dest, [src]
 

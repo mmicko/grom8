@@ -88,7 +88,7 @@ module grom_cpu(
 					begin
 						//$display("PC=%h", PC);
 						//$display("IR=%h", IR);
-						$display("    R0 %h R1 %h R2 %h R3 %h", R[0], R[1], R[2], R[3]);
+						$display("    R0 %h R1 %h R2 %h R3 %h SEG %h", R[0], R[1], R[2], R[3], SEG);
 						//
 						if (IR[7])
 						begin
@@ -108,51 +108,123 @@ module grom_cpu(
 									end
 								3'b001 :
 									begin
-										alu_a   <= R[IR[1:0]];   // first is register
-										alu_b   <= IR[3] ? 8'h01 : 8'h00; // 1 for INC and DEC
-										alu_reg <= IR[1:0];      // output is same register
-										alu_op  <= { 2'b00, IR[3:2] };
+										alu_a   <= R[0];      // first input R0
+										alu_b   <= R[IR[1:0]];
+										alu_reg <= 0;         // result in R0
+										alu_op  <= { 3'b000, IR[3:2] };
 										
 										state   <= STATE_ALU_RESULT;
 										
-										// Register instuctions
 										case(IR[3:2])
 											2'b00 : begin													
-													$display("CLR R%d",IR[1:0]);
+													$display("ADD R%d",IR[1:0]);
 													end
 											2'b01 : begin
-													$display("NOT R%d",IR[1:0]);
+													$display("SUB R%d",IR[1:0]);
 													end
 											2'b10 : begin
-													$display("INC R%d",IR[1:0]);
+													$display("ADC R%d",IR[1:0]);
 													end
 											2'b11 : begin
-													$display("DEC R%d",IR[1:0]);
+													$display("SBC R%d",IR[1:0]);
 													end
 										endcase
 									end
 								3'b010 :
 									begin
-										$display("ALU instruction");
 										alu_a   <= R[0];      // first input R0
 										alu_b   <= R[IR[1:0]];
 										alu_reg <= 0;         // result in R0
+										alu_op  <= { 3'b001, IR[3:2] };
 										state   <= STATE_ALU_RESULT;
+										case(IR[3:2])
+											2'b00 : begin													
+													$display("AND R%d",IR[1:0]);
+													end
+											2'b01 : begin
+													$display("OR R%d",IR[1:0]);
+													end
+											2'b10 : begin
+													$display("NOT R%d",IR[1:0]);
+													end
+											2'b11 : begin
+													$display("XOR R%d",IR[1:0]);
+													end
+										endcase										
 									end
 								3'b011 :
 									begin
-										$display("ALU instruction");
-										alu_a   <= R[0];      // first input R0
-										alu_b   <= R[IR[1:0]];
-										alu_reg <= 0;         // result in R0
+										alu_a   <= R[0];       // first  input R0
+										alu_b   <= R[IR[1:0]]; // second input REG
+										alu_reg <= IR[1:0];    // result in REG
+										alu_op  <= {3'b010, IR[3:2] };
 										state   <= STATE_ALU_RESULT;
+										case(IR[3:2])
+											2'b00 : begin													
+													$display("INC R%d",IR[1:0]);
+													end
+											2'b01 : begin
+													$display("DEC R%d",IR[1:0]);
+													end
+											2'b10 : begin
+													$display("CMP R%d",IR[1:0]);
+													end
+											2'b11 : begin
+													$display("TST R%d",IR[1:0]);
+													end
+										endcase
 									end
 								3'b100 :
 									begin
-										$display("ALU instruction");
-										alu_a   <= R[0];      // first input R0
-										// no 2nd input
-										alu_reg <= 0;         // result in R0
+										if (IR[3]==0)
+										begin
+											alu_a   <= R[0];      // first input R0
+											// no 2nd input
+											alu_reg <= 0;         // result in R0
+											alu_op  <= { 2'b10, IR[3:0] };
+											case(IR[2:0])
+												3'b000 : begin													
+														$display("SHL");
+														end
+												3'b001 : begin
+														$display("SHR");
+														end
+												3'b010 : begin
+														$display("SAL");
+														end
+												3'b011 : begin
+														$display("SAR");
+														end
+												3'b100 : begin													
+														$display("ROL");
+														end
+												3'b101 : begin
+														$display("ROR");
+														end
+												3'b110 : begin
+														$display("RCL");
+														end
+												3'b111 : begin
+														$display("RCR");
+														end
+											endcase
+										end
+										else
+										begin
+											alu_a   <= R[IR[1:0]];      // first input REG
+											// no 2nd input
+											alu_reg <= IR[1:0];         // result in REG
+											alu_op  <= { 4'b0111, IR[2] };
+											if(IR[2])
+											begin
+												$display("SET R%d",IR[1:0]);
+											end
+											else
+											begin
+												$display("CLR R%d",IR[1:0]);												
+											end										
+										end
+										
 										state   <= STATE_ALU_RESULT;
 									end
 								3'b101 :
