@@ -24,7 +24,9 @@ module ram_memory(
 	store[6] <= 8'b00011010; // INC R2
 	store[7] <= 8'b01100010; // STORE [R0],R2
 	store[8] <= 8'b01010100; // LOAD R1,[R0]
-	store[9] <= 8'b01111111; // HLT
+	store[9] <= 8'b11111101; // OUT 0
+	store[10] <= 8'b00000000; // 
+	store[11] <= 8'b01111111; // HLT
   end
 
   always @(posedge clk)

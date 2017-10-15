@@ -34,16 +34,25 @@ module grom_top
  wire mem_enable;
  wire  we;
  reg ioreq;
+ 
+ reg [7:0] display_out = 8'h00;
 
  grom_cpu cpu(.clk(i_Clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq));
 
  assign mem_enable = we & ~ioreq;
  ram_memory memory(.clk(i_Clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out));
-
-
+ 
+ always @(*)
+	begin
+		if(ioreq==1)
+		begin
+			display_out = memory_in;
+		end
+	end
+	
  hex_to_7seg upper_digit
   (.i_Clk(i_Clk),
-   .i_Value(memory_out[7:4]),
+   .i_Value(display_out[7:4]),
    .o_Segment_A(o_Segment1_A),
    .o_Segment_B(o_Segment1_B),
    .o_Segment_C(o_Segment1_C),
@@ -54,7 +63,7 @@ module grom_top
 
   hex_to_7seg lower_digit
   (.i_Clk(i_Clk),
-   .i_Value(memory_out[3:0]),
+   .i_Value(display_out[3:0]),
    .o_Segment_A(o_Segment2_A),
    .o_Segment_B(o_Segment2_B),
    .o_Segment_C(o_Segment2_C),

@@ -222,31 +222,58 @@ module grom_cpu(
 								end
 							3'b001 :
 								begin
-									$display("JC instruction");
+									$display("JC %h ",{IR[3:0], VALUE[7:0] });
 								end
 							3'b010 :
 								begin
-									$display("JNC instruction");
+									$display("JNC %h ",{IR[3:0], VALUE[7:0] });
 								end
 							3'b011 :
 								begin
-									$display("JM instruction");
+									$display("JM %h ",{IR[3:0], VALUE[7:0] });
 								end
 							3'b100 :
 								begin
-									$display("JP instruction");
+									$display("JP %h ",{IR[3:0], VALUE[7:0] });
 								end
 							3'b101 :
 								begin
-									$display("JZ instruction");
+									$display("JZ %h ",{IR[3:0], VALUE[7:0] });
 								end
 							3'b110 :
 								begin
-									$display("JNZ instruction");
+									$display("JNZ %h ",{IR[3:0], VALUE[7:0] });
 								end
 							3'b111 :
 								begin
-									$display("Special instruction");
+									case(IR[3:2])
+										2'b00 : begin												
+												$display("MOV R%d,0x%h",IR[1:0],VALUE);
+												end
+										2'b01 : begin
+												$display("MOV R%d,[0x%h]",IR[1:0], {SEG, VALUE});
+												end
+										2'b10 : begin
+												$display("MOV [0x%h],R%d", {SEG, VALUE}, IR[1:0]);
+												end
+										2'b11 : begin
+													case(IR[1:0])
+														2'b00 : begin												
+																$display("IN 0x%h",VALUE);
+																end
+														2'b01 : begin
+																$display("OUT [0x%h]", VALUE);
+																ioreq <= 1;
+																we    <= 1;
+																addr  <= { 4'b0000, VALUE };
+																data_out <= R[0];
+																end
+														default: begin
+																$display("MOV SEG,0x%h", VALUE);
+																end
+													endcase
+												end
+									endcase
 								end
 						endcase
 						state <= STATE_FETCH_PREP;
