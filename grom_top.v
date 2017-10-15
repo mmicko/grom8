@@ -20,13 +20,13 @@ module grom_top
    output o_Segment2_E,
    output o_Segment2_F,
    output o_Segment2_G
-   ); 
-      
+   );
+
  reg [31:0] counter = 0;
- 
+
  reg prev = 0;
  reg reset = 0;
- 
+
 
  wire [11:0] addr;
  wire [7:0] memory_out;
@@ -34,13 +34,13 @@ module grom_top
  wire mem_enable;
  wire  we;
  reg ioreq;
- 
+
  grom_cpu cpu(.clk(i_Clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq));
 
  assign mem_enable = we & ~ioreq;
  ram_memory memory(.clk(i_Clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out));
-  
- 
+
+
  hex_to_7seg upper_digit
   (.i_Clk(i_Clk),
    .i_Value(memory_out[7:4]),
@@ -51,7 +51,7 @@ module grom_top
    .o_Segment_E(o_Segment1_E),
    .o_Segment_F(o_Segment1_F),
    .o_Segment_G(o_Segment1_G));
-    
+
   hex_to_7seg lower_digit
   (.i_Clk(i_Clk),
    .i_Value(memory_out[3:0]),
@@ -62,7 +62,7 @@ module grom_top
    .o_Segment_E(o_Segment2_E),
    .o_Segment_F(o_Segment2_F),
    .o_Segment_G(o_Segment2_G));
-   
+
   assign o_LED_1 = 1'b0;
   assign o_LED_2 = 1'b0;
   assign o_LED_3 = 1'b1;
