@@ -33,7 +33,7 @@ module grom_top
  wire [7:0] memory_in;
  wire mem_enable;
  wire  we;
- reg ioreq;
+ wire ioreq;
  
  reg [7:0] display_out = 8'h00;
 

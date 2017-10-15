@@ -28,13 +28,13 @@ module grom_cpu(
 	parameter STATE_ALU_RESULT        = 4'b1010;
 
 	reg [3:0] state = STATE_RESET;
-	reg       HLT = 0;    // Halt state
+	reg       HLT;    // Halt state
 
 	reg [7:0]  alu_a;
 	reg [7:0]  alu_b;
 	reg [3:0]  alu_op;
 	
-	reg [2:0]  alu_reg;
+	reg [1:0]  alu_reg;
 	
 	wire [7:0] alu_res;
 	wire alu_C;
