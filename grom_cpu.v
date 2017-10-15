@@ -5,7 +5,8 @@ module grom_cpu(
 	input [7:0] data_in,
 	output reg [7:0] data_out,
 	output reg we,
-	output reg ioreq
+	output reg ioreq,
+	output reg m1
 );
 
 	reg[11:0] PC;    // Program counter
@@ -15,16 +16,18 @@ module grom_cpu(
 	reg[7:0] R[0:3]; // General purpose registers
 
 
-	parameter STATE_RESET             = 3'b000;
-	parameter STATE_FETCH_PREP        = 3'b001;
-	parameter STATE_FETCH_WAIT        = 3'b010;
-	parameter STATE_FETCH             = 3'b011;
-	parameter STATE_EXECUTE           = 3'b100;
-	parameter STATE_FETCH_VALUE_PREP  = 3'b101;
-	parameter STATE_FETCH_VALUE       = 3'b110;
-	parameter STATE_EXECUTE_DBL       = 3'b111;
+	parameter STATE_RESET             = 4'b0000;
+	parameter STATE_FETCH_PREP        = 4'b0001;
+	parameter STATE_FETCH_WAIT        = 4'b0010;
+	parameter STATE_FETCH             = 4'b0011;
+	parameter STATE_EXECUTE           = 4'b0100;
+	parameter STATE_FETCH_VALUE_PREP  = 4'b0101;
+	parameter STATE_FETCH_VALUE       = 4'b0110;
+	parameter STATE_EXECUTE_DBL       = 4'b0111;
+	parameter STATE_LOAD_VALUE_PREP   = 4'b1000;
+	parameter STATE_LOAD_VALUE        = 4'b1001;
 
-	reg [2:0] state = STATE_RESET;
+	reg [3:0] state = STATE_RESET;
 	reg       HLT = 0;    // Halt state
 
 
@@ -33,7 +36,7 @@ module grom_cpu(
 		if (reset)
 		begin
 			state <= STATE_RESET;
-			HLT   <= 0;
+			HLT   <= 0;			
 		end
 		else
 		begin
@@ -49,12 +52,15 @@ module grom_cpu(
 						addr  <= PC;
 						we    <= 0;
 						ioreq <= 0;
+						
+						m1	  <= 1;
 
 						state <= STATE_FETCH_WAIT;
 					end
 
 				STATE_FETCH_WAIT :
 					begin
+						m1	  <= 0;
 						// Sync with memory due to CLK
 						state <= (HLT) ? STATE_FETCH_PREP : STATE_FETCH;
 					end
@@ -80,6 +86,7 @@ module grom_cpu(
 						end
 						else
 						begin
+							state <= STATE_FETCH_PREP;
 							case(IR[6:4])
 								3'b000 :
 									begin
@@ -118,28 +125,46 @@ module grom_cpu(
 									end
 								3'b101 :
 									begin
-										$display("LOAD instruction");
+										$display("LOAD R%d,[R%d]", IR[3:2], IR[1:0]);
+										addr  <= { SEG, R[IR[1:0]] };
+										we    <= 0;
+										ioreq <= 0;
+										
+										state <= STATE_LOAD_VALUE_PREP;
 									end
 								3'b110 :
 									begin
-										$display("STORE instruction");
+										$display("STORE [R%d],R%d", IR[3:2], IR[1:0]);
+										addr     <= { SEG, R[IR[3:2]] };
+										we       <= 1;
+										ioreq    <= 0;
+										data_out <= R[IR[1:0]];
+										
+										state    <= STATE_FETCH_PREP;
 									end
 								3'b111 :
 									begin
-										$display("Special instruction");
-										// Register instuctions
+										// Special instuctions
 										case(IR[3:2])
-											2'b00 : SEG <= R[IR[1:0]][3:0];
-											2'b01 : R[IR[1:0]] <= {4'b0000, SEG };
-											2'b10 : SEG <= 4'b0000;
+											2'b00 : begin
+													SEG <= R[IR[1:0]][3:0];
+													$display("MOV SEG,R%d",IR[1:0]);
+													end
+											2'b01 : begin
+													R[IR[1:0]] <= {4'b0000, SEG };
+													$display("MOV R%d,SEG",IR[1:0]);
+													end
+											2'b10 : begin
+													SEG <= 4'b0000;
+													$display("CLR SEG");
+													end
 											2'b11 : begin
 													HLT <= 1;
 													$display("HALT");
 												end
 										endcase
 									end
-							endcase
-							state <= STATE_FETCH_PREP;
+							endcase							
 						end
 					end
 				STATE_FETCH_VALUE_PREP :
@@ -154,7 +179,6 @@ module grom_cpu(
 					end
 				STATE_EXECUTE_DBL :
 					begin
-						VALUE <= data_in;
 						case(IR[6:4])
 							3'b000 :
 								begin
@@ -195,7 +219,17 @@ module grom_cpu(
 						endcase
 						state <= STATE_FETCH_PREP;
 					end
-			endcase
+				STATE_LOAD_VALUE_PREP :
+					begin
+						// Sync with memory due to CLK
+						state <= STATE_LOAD_VALUE;
+					end
+				STATE_LOAD_VALUE :
+					begin
+						R[IR[3:2]] <= data_in;
+						state <= STATE_FETCH_PREP;
+					end				
+			endcase			
 		end
 	end
 endmodule

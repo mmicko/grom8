@@ -5,9 +5,10 @@ module test();
 	wire [7:0] memory_in;
 	wire mem_enable;
 	wire we;
+	wire m1;
 	reg reset;
 
-	grom_cpu cpu(.clk(clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq));
+	grom_cpu cpu(.clk(clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq),.m1(m1));
 
 	assign mem_enable = we & ~ioreq;
 
