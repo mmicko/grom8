@@ -158,7 +158,9 @@ module grom_cpu(
 										alu_b   <= R[IR[1:0]]; // second input REG
 										alu_reg <= IR[1:0];    // result in REG
 										alu_op  <= {3'b010, IR[3:2] };
-										state   <= STATE_ALU_RESULT;
+										
+										// CMP and TEST are not storing result
+										state   <= IR[3] ? STATE_FETCH_PREP : STATE_ALU_RESULT; 										
 										case(IR[3:2])
 											2'b00 : begin													
 													$display("INC R%d",IR[1:0]);
@@ -208,24 +210,24 @@ module grom_cpu(
 														$display("RCR");
 														end
 											endcase
+											state   <= STATE_ALU_RESULT;
 										end
 										else
 										begin
-											alu_a   <= R[IR[1:0]];      // first input REG
-											// no 2nd input
-											alu_reg <= IR[1:0];         // result in REG
-											alu_op  <= { 4'b0111, IR[2] };
 											if(IR[2])
 											begin
 												$display("SET R%d",IR[1:0]);
+												R[IR[1:0]] <= 8'hff;
 											end
 											else
 											begin
 												$display("CLR R%d",IR[1:0]);												
+												R[IR[1:0]] <= 8'h00;
 											end										
+											state    <= STATE_FETCH_PREP;
 										end
 										
-										state   <= STATE_ALU_RESULT;
+										
 									end
 								3'b101 :
 									begin

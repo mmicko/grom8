@@ -23,9 +23,6 @@ module alu(
 	parameter ALU_OP_CMP = 5'b01010;
 	parameter ALU_OP_TST = 5'b01011;
 
-	parameter ALU_OP_CLR = 5'b01110;
-	parameter ALU_OP_SET = 5'b01111;
-
 	parameter ALU_OP_SHL = 5'b10000; 
 	parameter ALU_OP_SHR = 5'b10001; 
 	parameter ALU_OP_SAL = 5'b10010; 
@@ -40,14 +37,6 @@ module alu(
 	always @(*)          
 	begin
 		case (operation)
-			ALU_OP_CLR :
-				begin
-					result = 8'h00;
-				end
-			ALU_OP_SET :
-				begin
-					result = 8'hff;
-				end
 			ALU_OP_INC :
 				begin
 					result = B + 1;
