@@ -12,7 +12,7 @@ module ram_memory(
   begin
 	$readmemh("boot.mem", store);
 	store[0] <= 8'b00010000; // CLR R0
-	store[1] <= 8'b00010100; // INC R0
+	store[1] <= 8'b00011000; // INC R0
 	store[2] <= 8'b00000100; // MOV R1,R0
 	store[3] <= 8'b00001001; // MOV R2,R1
 	//store[4] <= 8'b10000000; // JMP 0x001
@@ -21,7 +21,7 @@ module ram_memory(
 
 	store[4] <= 8'b01111000; // CLR SEG
 	store[5] <= 8'b01010001; // LOAD R0,[R1]
-	store[6] <= 8'b00010110; // INC R2
+	store[6] <= 8'b00011010; // INC R2
 	store[7] <= 8'b01100010; // STORE [R0],R2
 	store[8] <= 8'b01010100; // LOAD R1,[R0]
 	store[9] <= 8'b01111111; // HLT

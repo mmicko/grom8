@@ -14,8 +14,7 @@ module grom_cpu(
 	reg[7:0] VALUE;   // Temp reg for storing 2nd operand
 	reg[3:0] SEG;    // Segment regiser
 	reg[7:0] R[0:3]; // General purpose registers
-
-
+	
 	parameter STATE_RESET             = 4'b0000;
 	parameter STATE_FETCH_PREP        = 4'b0001;
 	parameter STATE_FETCH_WAIT        = 4'b0010;
@@ -26,11 +25,24 @@ module grom_cpu(
 	parameter STATE_EXECUTE_DBL       = 4'b0111;
 	parameter STATE_LOAD_VALUE_PREP   = 4'b1000;
 	parameter STATE_LOAD_VALUE        = 4'b1001;
+	parameter STATE_ALU_RESULT        = 4'b1010;
 
 	reg [3:0] state = STATE_RESET;
 	reg       HLT = 0;    // Halt state
 
-
+	reg [7:0]  alu_a;
+	reg [7:0]  alu_b;
+	reg [3:0]  alu_op;
+	
+	reg [2:0]  alu_reg;
+	
+	wire [7:0] alu_res;
+	wire alu_C;
+	wire alu_Z;
+	wire alu_S;
+	
+	alu alu(.A(alu_a),.B(alu_b),.operation(alu_op),.result(alu_res),.C(alu_C),.Z(alu_Z),.S(alu_S));
+	
 	always @(posedge clk)
 	begin
 		if (reset)
@@ -96,32 +108,52 @@ module grom_cpu(
 									end
 								3'b001 :
 									begin
-
+										alu_a   <= R[IR[1:0]];   // first is register
+										alu_b   <= IR[3] ? 8'h01 : 8'h00; // 1 for INC and DEC
+										alu_reg <= IR[1:0];      // output is same register
+										alu_op  <= { 2'b00, IR[3:2] };
+										
+										state   <= STATE_ALU_RESULT;
+										
 										// Register instuctions
 										case(IR[3:2])
-											2'b00 : begin
-													R[IR[1:0]] <= 0;
+											2'b00 : begin													
 													$display("CLR R%d",IR[1:0]);
 													end
 											2'b01 : begin
-													R[IR[1:0]] <= R[IR[1:0]] + 1;
+													$display("NOT R%d",IR[1:0]);
+													end
+											2'b10 : begin
 													$display("INC R%d",IR[1:0]);
 													end
-											2'b10 : R[IR[1:0]] <= R[IR[1:0]] - 1;
-											2'b11 : R[IR[1:0]] <= ~R[IR[1:0]];
+											2'b11 : begin
+													$display("DEC R%d",IR[1:0]);
+													end
 										endcase
 									end
 								3'b010 :
 									begin
 										$display("ALU instruction");
+										alu_a   <= R[0];      // first input R0
+										alu_b   <= R[IR[1:0]];
+										alu_reg <= 0;         // result in R0
+										state   <= STATE_ALU_RESULT;
 									end
 								3'b011 :
 									begin
 										$display("ALU instruction");
+										alu_a   <= R[0];      // first input R0
+										alu_b   <= R[IR[1:0]];
+										alu_reg <= 0;         // result in R0
+										state   <= STATE_ALU_RESULT;
 									end
 								3'b100 :
 									begin
 										$display("ALU instruction");
+										alu_a   <= R[0];      // first input R0
+										// no 2nd input
+										alu_reg <= 0;         // result in R0
+										state   <= STATE_ALU_RESULT;
 									end
 								3'b101 :
 									begin
@@ -227,6 +259,11 @@ module grom_cpu(
 				STATE_LOAD_VALUE :
 					begin
 						R[IR[3:2]] <= data_in;
+						state <= STATE_FETCH_PREP;
+					end				
+				STATE_ALU_RESULT :
+					begin
+						R[alu_reg] <= alu_res;
 						state <= STATE_FETCH_PREP;
 					end				
 			endcase			
