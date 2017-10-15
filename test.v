@@ -27,9 +27,7 @@ module test();
 		reset = 0;	
 		
 		#300
-		reset = 1;
-		#20
-		reset = 0;	
+		#300
 		#300
 		$finish;
 	end
