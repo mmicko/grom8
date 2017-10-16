@@ -33,23 +33,11 @@ module alu(
 	parameter ALU_OP_RCL = 5'b10110;
 	parameter ALU_OP_RCR = 5'b10111;
 
+	reg [7:0] tmp;
 
 	always @(*)          
 	begin
 		case (operation)
-			ALU_OP_INC :
-				begin
-					result = B + 1;
-				end
-			ALU_OP_DEC :
-				begin
-					result = B - 1;
-				end
-				
-			ALU_OP_NOT :
-				begin
-					result = ~A;
-				end
 			ALU_OP_ADD :
 				begin
 					{C, result } = A + B;
@@ -62,6 +50,76 @@ module alu(
 					Z = result == 0;
 					S = result[7];
 				end
+			ALU_OP_ADC :
+				begin
+					{C, result } = A + B + C;
+					Z = result == 0;
+					S = result[7];
+				end
+			ALU_OP_SBC :
+				begin
+					{C, result } = A - B - C;
+					Z = result == 0;
+					S = result[7];
+				end
+
+			ALU_OP_AND :
+				begin
+					result = A & B;
+					C = 0;
+					Z = result == 0;
+					S = result[7];
+				end
+			ALU_OP_OR :
+				begin
+					result = A | B;
+					C = 0;
+					Z = result == 0;
+					S = result[7];
+				end
+			ALU_OP_NOT :
+				begin
+					result = ~A;
+					C = 0;
+					Z = result == 0;
+					S = result[7];
+				end
+			ALU_OP_XOR :
+				begin
+					result = A ^ B;
+					C = 0;
+					Z = result == 0;
+					S = result[7];
+				end
+
+			ALU_OP_INC :
+				begin
+					{C, result } = B + 1;
+					Z = result == 0;
+					S = result[7];
+				end
+			ALU_OP_DEC :
+				begin
+					{C, result } = B - 1;
+					Z = result == 0;
+					S = result[7];
+				end
+			ALU_OP_CMP :
+				begin
+					{C, tmp } = A - B;
+					Z = tmp == 0;
+					S = tmp[7];
+					result = A; // no result change
+				end
+			ALU_OP_TST :
+				begin
+					tmp = A & B;
+					C = 0;
+					Z = tmp == 0;
+					S = tmp[7];
+					result = A; // no result change
+				end
+				
 		endcase
 	end
 endmodule

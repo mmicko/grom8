@@ -6,13 +6,15 @@ module grom_cpu(
 	output reg [7:0] data_out,
 	output reg we,
 	output reg ioreq,
-	output reg m1
+	output reg m1,
+	output reg hlt
 );
 
 	reg[11:0] PC;    // Program counter
 	reg[7:0] IR;     // Instruction register
 	reg[7:0] VALUE;   // Temp reg for storing 2nd operand
-	reg[3:0] SEG;    // Segment regiser
+	reg[3:0] CS;    // Code segment regiser
+	reg[3:0] DS;    // Data segment regiser
 	reg[7:0] R[0:3]; // General purpose registers
 	
 	parameter STATE_RESET             = 4'b0000;
@@ -28,18 +30,18 @@ module grom_cpu(
 	parameter STATE_ALU_RESULT        = 4'b1010;
 
 	reg [3:0] state = STATE_RESET;
-	reg       HLT;    // Halt state
 
 	reg [7:0]  alu_a;
 	reg [7:0]  alu_b;
 	reg [3:0]  alu_op;
 	
-	reg [1:0]  alu_reg;
+	reg [1:0]  RESULT_REG;
 	
 	wire [7:0] alu_res;
 	wire alu_C;
 	wire alu_Z;
 	wire alu_S;
+	integer jump;
 	
 	alu alu(.A(alu_a),.B(alu_b),.operation(alu_op),.result(alu_res),.C(alu_C),.Z(alu_Z),.S(alu_S));
 	
@@ -48,7 +50,7 @@ module grom_cpu(
 		if (reset)
 		begin
 			state <= STATE_RESET;
-			HLT   <= 0;			
+			hlt   <= 0;			
 		end
 		else
 		begin
@@ -74,7 +76,7 @@ module grom_cpu(
 					begin
 						m1	  <= 0;
 						// Sync with memory due to CLK
-						state <= (HLT) ? STATE_FETCH_PREP : STATE_FETCH;
+						state <= (hlt) ? STATE_FETCH_PREP : STATE_FETCH;
 					end
 
 				STATE_FETCH :
@@ -88,7 +90,7 @@ module grom_cpu(
 					begin
 						//$display("PC=%h", PC);
 						//$display("IR=%h", IR);
-						$display("    R0 %h R1 %h R2 %h R3 %h SEG %h", R[0], R[1], R[2], R[3], SEG);
+						$display("    R0 %h R1 %h R2 %h R3 %h CS %h DS %h ALU [%d %d %d] ", R[0], R[1], R[2], R[3], CS, DS, alu_C,alu_S,alu_Z);
 						//
 						if (IR[7])
 						begin
@@ -110,7 +112,7 @@ module grom_cpu(
 									begin
 										alu_a   <= R[0];      // first input R0
 										alu_b   <= R[IR[1:0]];
-										alu_reg <= 0;         // result in R0
+										RESULT_REG <= 0;         // result in R0
 										alu_op  <= { 3'b000, IR[3:2] };
 										
 										state   <= STATE_ALU_RESULT;
@@ -134,7 +136,7 @@ module grom_cpu(
 									begin
 										alu_a   <= R[0];      // first input R0
 										alu_b   <= R[IR[1:0]];
-										alu_reg <= 0;         // result in R0
+										RESULT_REG <= 0;         // result in R0
 										alu_op  <= { 3'b001, IR[3:2] };
 										state   <= STATE_ALU_RESULT;
 										case(IR[3:2])
@@ -156,7 +158,7 @@ module grom_cpu(
 									begin
 										alu_a   <= R[0];       // first  input R0
 										alu_b   <= R[IR[1:0]]; // second input REG
-										alu_reg <= IR[1:0];    // result in REG
+										RESULT_REG <= IR[1:0];    // result in REG
 										alu_op  <= {3'b010, IR[3:2] };
 										
 										// CMP and TEST are not storing result
@@ -182,7 +184,7 @@ module grom_cpu(
 										begin
 											alu_a   <= R[0];      // first input R0
 											// no 2nd input
-											alu_reg <= 0;         // result in R0
+											RESULT_REG <= 0;         // result in R0
 											alu_op  <= { 2'b10, IR[3:0] };
 											case(IR[2:0])
 												3'b000 : begin													
@@ -214,34 +216,25 @@ module grom_cpu(
 										end
 										else
 										begin
-											if(IR[2])
-											begin
-												$display("SET R%d",IR[1:0]);
-												R[IR[1:0]] <= 8'hff;
-											end
-											else
-											begin
-												$display("CLR R%d",IR[1:0]);												
-												R[IR[1:0]] <= 8'h00;
-											end										
+											$display("Unused opcode %h",IR);
 											state    <= STATE_FETCH_PREP;
-										end
-										
+										end									
 										
 									end
 								3'b101 :
 									begin
 										$display("LOAD R%d,[R%d]", IR[3:2], IR[1:0]);
-										addr  <= { SEG, R[IR[1:0]] };
+										addr  <= { DS, R[IR[1:0]] };
 										we    <= 0;
 										ioreq <= 0;
+										RESULT_REG <= IR[3:2];
 										
 										state <= STATE_LOAD_VALUE_PREP;
 									end
 								3'b110 :
 									begin
 										$display("STORE [R%d],R%d", IR[3:2], IR[1:0]);
-										addr     <= { SEG, R[IR[3:2]] };
+										addr     <= { DS, R[IR[3:2]] };
 										we       <= 1;
 										ioreq    <= 0;
 										data_out <= R[IR[1:0]];
@@ -253,19 +246,18 @@ module grom_cpu(
 										// Special instuctions
 										case(IR[3:2])
 											2'b00 : begin
-													SEG <= R[IR[1:0]][3:0];
-													$display("MOV SEG,R%d",IR[1:0]);
+													CS <= R[IR[1:0]][3:0];
+													$display("MOV CS,R%d",IR[1:0]);
 													end
 											2'b01 : begin
-													R[IR[1:0]] <= {4'b0000, SEG };
-													$display("MOV R%d,SEG",IR[1:0]);
+													DS <= R[IR[1:0]][3:0];
+													$display("MOV DS,R%d",IR[1:0]);
 													end
 											2'b10 : begin
-													SEG <= 4'b0000;
-													$display("CLR SEG");
+													$display("Unused opcode %h",IR);
 													end
 											2'b11 : begin
-													HLT <= 1;
+													hlt <= 1;
 													$display("HALT");
 												end
 										endcase
@@ -285,72 +277,196 @@ module grom_cpu(
 					end
 				STATE_EXECUTE_DBL :
 					begin
+						state <= STATE_FETCH_PREP;
 						case(IR[6:4])
 							3'b000 :
 								begin
-									$display("JMP %h ",{IR[3:0], VALUE[7:0] });
-									PC    <= { IR[3:0], VALUE[7:0] };
-									addr  <= { IR[3:0], VALUE[7:0] };
-									we    <= 0;
-									ioreq <= 0;
+									case(IR[3:0])
+										3'b000 :
+											begin
+												$display("JMP %h ",{ CS, VALUE[7:0] });
+												jump = 1;
+											end
+										3'b001 :
+											begin
+												$display("JC %h ",{CS, VALUE[7:0] });
+												jump = (alu_C==1);
+											end
+										3'b010 :
+											begin
+												$display("JNC %h ",{CS, VALUE[7:0] });
+												jump = (alu_C==0);												
+											end
+										3'b011 :
+											begin
+												$display("JM %h ",{CS, VALUE[7:0] });
+												jump = (alu_S==1);
+											end
+										3'b100 :
+											begin
+												$display("JP %h ",{CS, VALUE[7:0] });
+												jump = (alu_S==0);
+											end
+										3'b101 :
+											begin
+												$display("JZ %h ",{CS, VALUE[7:0] });
+												jump = (alu_Z==1);
+											end
+										3'b110 :
+											begin
+												$display("JNZ %h ",{CS, VALUE[7:0] });
+												jump = (alu_Z==0);												
+											end
+										3'b111 :
+											begin
+												$display("Unused opcode %h",IR);
+												jump = 0;
+											end
+									endcase								
+									
+									if (jump)
+									begin
+										PC    <= { CS, VALUE[7:0] };
+										addr  <= { CS, VALUE[7:0] };
+										we    <= 0;
+										ioreq <= 0;											
+									end												
 								end
 							3'b001 :
 								begin
-									$display("JC %h ",{IR[3:0], VALUE[7:0] });
+									case(IR[3:0])
+										3'b000 :
+											begin
+												$display("JR %h ", PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]} );
+												jump = 1;
+											end
+										3'b001 :
+											begin
+												$display("JRC %h ",{CS, VALUE[7:0] });
+												jump = (alu_C==1);
+											end
+										3'b010 :
+											begin
+												$display("JRNC %h ",{CS, VALUE[7:0] });
+												jump = (alu_C==0);
+											end
+										3'b011 :
+											begin
+												$display("JRM %h ",{CS, VALUE[7:0] });
+												jump = (alu_S==1);
+											end
+										3'b100 :
+											begin
+												$display("JRP %h ",{CS, VALUE[7:0] });
+												jump = (alu_S==0);
+											end
+										3'b101 :
+											begin
+												$display("JRZ %h ",{CS, VALUE[7:0] });
+												jump = (alu_Z==1);
+											end
+										3'b110 :
+											begin
+												$display("JRNZ %h ",{CS, VALUE[7:0] });
+												jump = (alu_Z==0);
+											end
+										3'b111 :
+											begin
+												$display("Unused opcode %h",IR);							
+												jump = 0;
+											end
+									endcase								
+									if (jump)
+									begin
+										PC    <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
+										addr  <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
+										we    <= 0;
+										ioreq <= 0;											
+									end
 								end
+								
 							3'b010 :
 								begin
-									$display("JNC %h ",{IR[3:0], VALUE[7:0] });
+									$display("JUMP %h ",{ IR[3:0], VALUE[7:0] });
+									PC    <= { IR[3:0], VALUE[7:0] };
+									addr  <= { IR[3:0], VALUE[7:0] };
+									we    <= 0;
+									ioreq <= 0;									
 								end
 							3'b011 :
 								begin
-									$display("JM %h ",{IR[3:0], VALUE[7:0] });
+									$display("Unused opcode %h",IR);	 
 								end
 							3'b100 :
 								begin
-									$display("JP %h ",{IR[3:0], VALUE[7:0] });
+									$display("IN R%d,[0x%h]",IR[1:0], VALUE);
+									ioreq <= 1;
+									we    <= 0;
+									addr  <= { 4'b0000, VALUE };
+									RESULT_REG <= IR[1:0];			
+									state    <= STATE_LOAD_VALUE_PREP;									
 								end
 							3'b101 :
 								begin
-									$display("JZ %h ",{IR[3:0], VALUE[7:0] });
+									$display("OUT [0x%h],R%d",VALUE,IR[1:0]);
+									ioreq <= 1;
+									we    <= 1;
+									addr  <= { 4'b0000, VALUE };
+									data_out <= R[IR[1:0]];			
+									$display("output value is [0x%h]",R[IR[1:0]]);
+									state    <= STATE_FETCH_PREP;									
 								end
 							3'b110 :
 								begin
-									$display("JNZ %h ",{IR[3:0], VALUE[7:0] });
+									// Special instuctions
+									case(IR[1:0])
+										2'b00 : begin
+												$display("MOV CS,0x%h",VALUE);
+												CS <= VALUE;
+												end
+										2'b01 : begin
+												$display("MOV DS,0x%h",VALUE);
+												DS <= VALUE;
+												end
+										2'b10 : begin
+													$display("Unused opcode %h",IR);
+												end
+										2'b11 : begin
+													$display("Unused opcode %h",IR);
+												end								
+									endcase
 								end
 							3'b111 :
 								begin
 									case(IR[3:2])
 										2'b00 : begin												
-												$display("MOV R%d,0x%h",IR[1:0],VALUE);
+													$display("MOV R%d,0x%h",IR[1:0],VALUE);
+													R[IR[1:0]] <= VALUE;
 												end
 										2'b01 : begin
-												$display("MOV R%d,[0x%h]",IR[1:0], {SEG, VALUE});
+													$display("LOAD R%d,[0x%h]",IR[1:0], {DS, VALUE});												
+													addr  <= { DS, R[IR[1:0]] };
+													we    <= 0;
+													ioreq <= 0;
+													RESULT_REG <= IR[1:0];
+													
+													state <= STATE_LOAD_VALUE_PREP;
 												end
 										2'b10 : begin
-												$display("MOV [0x%h],R%d", {SEG, VALUE}, IR[1:0]);
+													$display("STORE [0x%h],R%d", {DS, VALUE}, IR[1:0]);
+													addr     <= { DS, VALUE };
+													we       <= 1;
+													ioreq    <= 0;
+													data_out <= R[IR[1:0]];
+													
+													state    <= STATE_FETCH_PREP;												
 												end
 										2'b11 : begin
-													case(IR[1:0])
-														2'b00 : begin												
-																$display("IN 0x%h",VALUE);
-																end
-														2'b01 : begin
-																$display("OUT [0x%h]", VALUE);
-																ioreq <= 1;
-																we    <= 1;
-																addr  <= { 4'b0000, VALUE };
-																data_out <= R[0];
-																end
-														default: begin
-																$display("MOV SEG,0x%h", VALUE);
-																end
-													endcase
+													$display("Unused opcode %h",IR);
 												end
 									endcase
 								end
 						endcase
-						state <= STATE_FETCH_PREP;
 					end
 				STATE_LOAD_VALUE_PREP :
 					begin
@@ -359,12 +475,13 @@ module grom_cpu(
 					end
 				STATE_LOAD_VALUE :
 					begin
-						R[IR[3:2]] <= data_in;
+						R[RESULT_REG] <= data_in;
 						state <= STATE_FETCH_PREP;
-					end				
+					end	
+				
 				STATE_ALU_RESULT :
 					begin
-						R[alu_reg] <= alu_res;
+						R[RESULT_REG] <= alu_res;
 						state <= STATE_FETCH_PREP;
 					end				
 			endcase			

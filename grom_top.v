@@ -34,19 +34,20 @@ module grom_top
  wire mem_enable;
  wire  we;
  wire ioreq;
+ wire  hlt;
  
  reg [7:0] display_out = 8'h00;
 
- grom_cpu cpu(.clk(i_Clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq));
+ grom_cpu cpu(.clk(i_Clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq),.hlt(hlt));
 
  assign mem_enable = we & ~ioreq;
  ram_memory memory(.clk(i_Clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out));
  
- always @(*)
+ always @(posedge i_Clk)
 	begin
-		if(ioreq==1)
+		if(ioreq==1 && we==1)
 		begin
-			display_out = memory_in;
+			display_out <= memory_in;
 		end
 	end
 	
@@ -72,7 +73,7 @@ module grom_top
    .o_Segment_F(o_Segment2_F),
    .o_Segment_G(o_Segment2_G));
 
-  assign o_LED_1 = 1'b0;
+  assign o_LED_1 = hlt;
   assign o_LED_2 = 1'b0;
   assign o_LED_3 = 1'b1;
   assign o_LED_4 = 1'b0;

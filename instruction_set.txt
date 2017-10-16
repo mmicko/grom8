@@ -42,19 +42,20 @@ R0-R3 - registers      (8 bit)
 0100 01 10          RCL              rotate with carry
 0100 01 11          RCR    		     rotate with carry
                    
-0100 10 reg         CLR reg     reg = 0x00
-0100 11 reg         SET reg     reg = 0xff
-
+0100 1x xx           ???
 
 0101 dest src	   LOAD dest, [src]
 
 0110 dest src      STORE [dest], src
 
-0111 00 reg   MOV SEG, reg
-0111 01 reg   MOV reg, SEG
+0111 00 reg   MOV CS, reg
+0111 01 reg   MOV DS, reg
+0111 10 reg   ???
 
-0111 10 xx    CLR SEG
-0111 11 xx    HLT
+0111 11 00    ???
+0111 11 01	  ???
+0111 11 10	  ???
+0111 11 11    HLT
 
 ============================================================
 
@@ -73,3 +74,5 @@ R0-R3 - registers      (8 bit)
 1111 11 00  port  IN  port  (R0 read)
 1111 11 01  port  OUT port  (R0 to output)
 1111 11 1x  val   MOV SEG, val
+
+1101 00 00
