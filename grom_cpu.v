@@ -15,6 +15,7 @@ module grom_cpu(
 	reg[7:0] VALUE;   // Temp reg for storing 2nd operand
 	reg[3:0] CS;    // Code segment regiser
 	reg[3:0] DS;    // Data segment regiser
+	reg[11:0] SP;    // Stack pointer regiser
 	reg[7:0] R[0:3]; // General purpose registers
 	
 	parameter STATE_RESET             = 4'b0000;
@@ -59,6 +60,13 @@ module grom_cpu(
 					begin
 						PC    <= 12'h000;
 						state <= STATE_FETCH_PREP;
+						CS    <= 4'h0;
+						DS    <= 4'h0;
+						R[0]  <= 8'h00;
+						R[1]  <= 8'h00;
+						R[2]  <= 8'h00;
+						R[3]  <= 8'h00;
+						SP    <= 12'hfff;
 					end
 
 				STATE_FETCH_PREP :
@@ -216,7 +224,14 @@ module grom_cpu(
 										end
 										else
 										begin
-											$display("Unused opcode %h",IR);
+											if (IR[2]==0)
+											begin
+												$display("PUSH R%d",IR[1:0]);
+											end
+											else
+											begin
+												$display("POP R%d",IR[1:0]);
+											end
 											state    <= STATE_FETCH_PREP;
 										end									
 										
@@ -254,11 +269,37 @@ module grom_cpu(
 													$display("MOV DS,R%d",IR[1:0]);
 													end
 											2'b10 : begin
-													$display("Unused opcode %h",IR);
+														case(IR[1:0])
+															2'b00 : begin
+																	$display("PUSH CS");
+																	end
+															2'b01 : begin
+																	$display("PUSH DS");
+																	end
+															2'b10 : begin
+																	$display("RET");
+																	end
+															2'b11 : begin
+																	$display("Unused opcode");
+																end
+														endcase
 													end
 											2'b11 : begin
-													hlt <= 1;
-													$display("HALT");
+														case(IR[1:0])
+															2'b00 : begin
+																	$display("POP CS");
+																	end
+															2'b01 : begin
+																	$display("POP DS");
+																	end
+															2'b10 : begin
+																	$display("Unused opcode");
+																	end
+															2'b11 : begin
+																	hlt <= 1;
+																	$display("HALT");																	
+																	end
+														endcase
 												end
 										endcase
 									end
@@ -281,111 +322,113 @@ module grom_cpu(
 						case(IR[6:4])
 							3'b000 :
 								begin
-									case(IR[3:0])
-										3'b000 :
-											begin
-												$display("JMP %h ",{ CS, VALUE[7:0] });
-												jump = 1;
-											end
-										3'b001 :
-											begin
-												$display("JC %h ",{CS, VALUE[7:0] });
-												jump = (alu_C==1);
-											end
-										3'b010 :
-											begin
-												$display("JNC %h ",{CS, VALUE[7:0] });
-												jump = (alu_C==0);												
-											end
-										3'b011 :
-											begin
-												$display("JM %h ",{CS, VALUE[7:0] });
-												jump = (alu_S==1);
-											end
-										3'b100 :
-											begin
-												$display("JP %h ",{CS, VALUE[7:0] });
-												jump = (alu_S==0);
-											end
-										3'b101 :
-											begin
-												$display("JZ %h ",{CS, VALUE[7:0] });
-												jump = (alu_Z==1);
-											end
-										3'b110 :
-											begin
-												$display("JNZ %h ",{CS, VALUE[7:0] });
-												jump = (alu_Z==0);												
-											end
-										3'b111 :
-											begin
-												$display("Unused opcode %h",IR);
-												jump = 0;
-											end
-									endcase								
-									
-									if (jump)
+								if (IR[3]==0)
 									begin
-										PC    <= { CS, VALUE[7:0] };
-										addr  <= { CS, VALUE[7:0] };
-										we    <= 0;
-										ioreq <= 0;											
-									end												
-								end
-							3'b001 :
-								begin
-									case(IR[3:0])
-										3'b000 :
-											begin
-												$display("JR %h ", PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]} );
-												jump = 1;
-											end
-										3'b001 :
-											begin
-												$display("JRC %h ",{CS, VALUE[7:0] });
-												jump = (alu_C==1);
-											end
-										3'b010 :
-											begin
-												$display("JRNC %h ",{CS, VALUE[7:0] });
-												jump = (alu_C==0);
-											end
-										3'b011 :
-											begin
-												$display("JRM %h ",{CS, VALUE[7:0] });
-												jump = (alu_S==1);
-											end
-										3'b100 :
-											begin
-												$display("JRP %h ",{CS, VALUE[7:0] });
-												jump = (alu_S==0);
-											end
-										3'b101 :
-											begin
-												$display("JRZ %h ",{CS, VALUE[7:0] });
-												jump = (alu_Z==1);
-											end
-										3'b110 :
-											begin
-												$display("JRNZ %h ",{CS, VALUE[7:0] });
-												jump = (alu_Z==0);
-											end
-										3'b111 :
-											begin
-												$display("Unused opcode %h",IR);							
-												jump = 0;
-											end
-									endcase								
-									if (jump)
+										case(IR[2:0])
+											3'b000 :
+												begin
+													$display("JMP %h ",{ CS, VALUE[7:0] });
+													jump = 1;
+												end
+											3'b001 :
+												begin
+													$display("JC %h ",{CS, VALUE[7:0] });
+													jump = (alu_C==1);
+												end
+											3'b010 :
+												begin
+													$display("JNC %h ",{CS, VALUE[7:0] });
+													jump = (alu_C==0);												
+												end
+											3'b011 :
+												begin
+													$display("JM %h ",{CS, VALUE[7:0] });
+													jump = (alu_S==1);
+												end
+											3'b100 :
+												begin
+													$display("JP %h ",{CS, VALUE[7:0] });
+													jump = (alu_S==0);
+												end
+											3'b101 :
+												begin
+													$display("JZ %h ",{CS, VALUE[7:0] });
+													jump = (alu_Z==1);
+												end
+											3'b110 :
+												begin
+													$display("JNZ %h ",{CS, VALUE[7:0] });
+													jump = (alu_Z==0);												
+												end
+											3'b111 :
+												begin
+													$display("Unused opcode %h",IR);
+													jump = 0;
+												end
+										endcase								
+										
+										if (jump)
+										begin
+											PC    <= { CS, VALUE[7:0] };
+											addr  <= { CS, VALUE[7:0] };
+											we    <= 0;
+											ioreq <= 0;											
+										end												
+									end
+								else
 									begin
-										PC    <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
-										addr  <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
-										we    <= 0;
-										ioreq <= 0;											
+										case(IR[2:0])
+											3'b000 :
+												begin
+													$display("JR %h ", PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]} );
+													jump = 1;
+												end
+											3'b001 :
+												begin
+													$display("JRC %h ",{CS, VALUE[7:0] });
+													jump = (alu_C==1);
+												end
+											3'b010 :
+												begin
+													$display("JRNC %h ",{CS, VALUE[7:0] });
+													jump = (alu_C==0);
+												end
+											3'b011 :
+												begin
+													$display("JRM %h ",{CS, VALUE[7:0] });
+													jump = (alu_S==1);
+												end
+											3'b100 :
+												begin
+													$display("JRP %h ",{CS, VALUE[7:0] });
+													jump = (alu_S==0);
+												end
+											3'b101 :
+												begin
+													$display("JRZ %h ",{CS, VALUE[7:0] });
+													jump = (alu_Z==1);
+												end
+											3'b110 :
+												begin
+													$display("JRNZ %h ",{CS, VALUE[7:0] });
+													jump = (alu_Z==0);
+												end
+											3'b111 :
+												begin
+													$display("Unused opcode %h",IR);							
+													jump = 0;
+												end
+										endcase								
+										if (jump)
+										begin
+											PC    <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
+											addr  <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
+											we    <= 0;
+											ioreq <= 0;											
+										end
 									end
 								end
-								
-							3'b010 :
+							3'b001 :
 								begin
 									$display("JUMP %h ",{ IR[3:0], VALUE[7:0] });
 									PC    <= { IR[3:0], VALUE[7:0] };
@@ -393,9 +436,13 @@ module grom_cpu(
 									we    <= 0;
 									ioreq <= 0;									
 								end
+							3'b010 :
+								begin
+									$display("CALL %h ",{ IR[3:0], VALUE[7:0] });
+								end
 							3'b011 :
 								begin
-									$display("Unused opcode %h",IR);	 
+									$display("Unused opcode");
 								end
 							3'b100 :
 								begin
