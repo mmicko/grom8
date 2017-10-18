@@ -12,8 +12,15 @@ module test();
 
 	assign mem_enable = we & ~ioreq;
 
-	ram_memory memory(.clk(clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out));
+	ram_memory memory(.clk(clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out),.memreq(~ioreq));
 
+	always @(posedge clk)
+	begin
+		if(ioreq==1 && we==1 && addr==12'h000)
+		begin
+			$display("out: %h",memory_in);			
+		end
+	end
 
 	always
 		#(5) clk <= !clk;

@@ -26,10 +26,9 @@ module grom_cpu(
 	parameter STATE_FETCH_VALUE_PREP  = 4'b0101;
 	parameter STATE_FETCH_VALUE       = 4'b0110;
 	parameter STATE_EXECUTE_DBL       = 4'b0111;
-	parameter STATE_LOAD_VALUE_PREP   = 4'b1000;
-	parameter STATE_LOAD_VALUE        = 4'b1001;
-	parameter STATE_ALU_RESULT        = 4'b1010;
-
+	parameter STATE_LOAD_VALUE        = 4'b1000;
+	parameter STATE_ALU_RESULT        = 4'b1001;
+	
 	reg [3:0] state = STATE_RESET;
 
 	reg [7:0]  alu_a;
@@ -61,7 +60,7 @@ module grom_cpu(
 						PC    <= 12'h000;
 						state <= STATE_FETCH_PREP;
 						CS    <= 4'h0;
-						DS    <= 4'h0;
+						DS    <= 4'hd;
 						R[0]  <= 8'h00;
 						R[1]  <= 8'h00;
 						R[2]  <= 8'h00;
@@ -98,7 +97,7 @@ module grom_cpu(
 					begin
 						//$display("PC=%h", PC);
 						//$display("IR=%h", IR);
-						$display("    R0 %h R1 %h R2 %h R3 %h CS %h DS %h ALU [%d %d %d] ", R[0], R[1], R[2], R[3], CS, DS, alu_C,alu_S,alu_Z);
+						$display("    PC %h R0 %h R1 %h R2 %h R3 %h CS %h DS %h SP %h ALU [%d %d %d]", PC, R[0], R[1], R[2], R[3], CS, DS, SP, alu_C,alu_S,alu_Z);
 						//
 						if (IR[7])
 						begin
@@ -107,14 +106,14 @@ module grom_cpu(
 							PC    <= PC + 1;
 						end
 						else
-						begin
-							state <= STATE_FETCH_PREP;
+						begin							
 							case(IR[6:4])
 								3'b000 :
 									begin
 										$display("MOV R%d,R%d",IR[3:2],IR[1:0]);
 										// MOV dest,src instruction
 										R[IR[3:2]] <= R[IR[1:0]];
+										state <= STATE_FETCH_PREP;
 									end
 								3'b001 :
 									begin
@@ -227,14 +226,24 @@ module grom_cpu(
 											if (IR[2]==0)
 											begin
 												$display("PUSH R%d",IR[1:0]);
+												addr     <= SP;
+												we       <= 1;
+												ioreq    <= 0;
+												data_out <= R[IR[1:0]];												
+												SP	     <= SP - 1;
+												state    <= STATE_FETCH_PREP;												
 											end
 											else
 											begin
 												$display("POP R%d",IR[1:0]);
-											end
-											state    <= STATE_FETCH_PREP;
-										end									
-										
+												addr  <= SP + 1;
+												we    <= 0;
+												ioreq <= 0;
+												RESULT_REG <= IR[1:0];
+												SP	  <= SP + 1;
+												state <= STATE_LOAD_VALUE;
+											end											
+										end										
 									end
 								3'b101 :
 									begin
@@ -244,7 +253,7 @@ module grom_cpu(
 										ioreq <= 0;
 										RESULT_REG <= IR[3:2];
 										
-										state <= STATE_LOAD_VALUE_PREP;
+										state <= STATE_LOAD_VALUE;
 									end
 								3'b110 :
 									begin
@@ -262,10 +271,12 @@ module grom_cpu(
 										case(IR[3:2])
 											2'b00 : begin
 													CS <= R[IR[1:0]][3:0];
+													state <= STATE_FETCH_PREP;
 													$display("MOV CS,R%d",IR[1:0]);
 													end
 											2'b01 : begin
 													DS <= R[IR[1:0]][3:0];
+													state <= STATE_FETCH_PREP;
 													$display("MOV DS,R%d",IR[1:0]);
 													end
 											2'b10 : begin
@@ -283,6 +294,7 @@ module grom_cpu(
 																	$display("Unused opcode");
 																end
 														endcase
+														state <= STATE_FETCH_PREP;
 													end
 											2'b11 : begin
 														case(IR[1:0])
@@ -300,6 +312,7 @@ module grom_cpu(
 																	$display("HALT");																	
 																	end
 														endcase
+														state <= STATE_FETCH_PREP;
 												end
 										endcase
 									end
@@ -317,8 +330,7 @@ module grom_cpu(
 						state <= STATE_EXECUTE_DBL;
 					end
 				STATE_EXECUTE_DBL :
-					begin
-						state <= STATE_FETCH_PREP;
+					begin						
 						case(IR[6:4])
 							3'b000 :
 								begin
@@ -372,8 +384,9 @@ module grom_cpu(
 											PC    <= { CS, VALUE[7:0] };
 											addr  <= { CS, VALUE[7:0] };
 											we    <= 0;
-											ioreq <= 0;											
+											ioreq <= 0;			
 										end												
+										state <= STATE_FETCH_PREP;
 									end
 								else
 									begin
@@ -424,8 +437,9 @@ module grom_cpu(
 											PC    <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
 											addr  <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
 											we    <= 0;
-											ioreq <= 0;											
+											ioreq <= 0;			
 										end
+										state <= STATE_FETCH_PREP;
 									end
 								end
 							3'b001 :
@@ -434,15 +448,18 @@ module grom_cpu(
 									PC    <= { IR[3:0], VALUE[7:0] };
 									addr  <= { IR[3:0], VALUE[7:0] };
 									we    <= 0;
-									ioreq <= 0;									
+									ioreq <= 0;
+									state <= STATE_FETCH_PREP;									
 								end
 							3'b010 :
 								begin
 									$display("CALL %h ",{ IR[3:0], VALUE[7:0] });
+									state <= STATE_FETCH_PREP;									
 								end
 							3'b011 :
 								begin
 									$display("Unused opcode");
+									state <= STATE_FETCH_PREP;									
 								end
 							3'b100 :
 								begin
@@ -451,7 +468,7 @@ module grom_cpu(
 									we    <= 0;
 									addr  <= { 4'b0000, VALUE };
 									RESULT_REG <= IR[1:0];			
-									state    <= STATE_LOAD_VALUE_PREP;									
+									state    <= STATE_LOAD_VALUE;									
 								end
 							3'b101 :
 								begin
@@ -459,7 +476,7 @@ module grom_cpu(
 									ioreq <= 1;
 									we    <= 1;
 									addr  <= { 4'b0000, VALUE };
-									data_out <= R[IR[1:0]];			
+									data_out <= R[IR[1:0]];
 									$display("output value is [0x%h]",R[IR[1:0]]);
 									state    <= STATE_FETCH_PREP;									
 								end
@@ -470,16 +487,20 @@ module grom_cpu(
 										2'b00 : begin
 												$display("MOV CS,0x%h",VALUE);
 												CS <= VALUE;
+												state <= STATE_FETCH_PREP;									
 												end
 										2'b01 : begin
 												$display("MOV DS,0x%h",VALUE);
 												DS <= VALUE;
+												state <= STATE_FETCH_PREP;									
 												end
 										2'b10 : begin
 													$display("Unused opcode %h",IR);
+													state <= STATE_FETCH_PREP;									
 												end
 										2'b11 : begin
 													$display("Unused opcode %h",IR);
+													state <= STATE_FETCH_PREP;									
 												end								
 									endcase
 								end
@@ -489,6 +510,7 @@ module grom_cpu(
 										2'b00 : begin												
 													$display("MOV R%d,0x%h",IR[1:0],VALUE);
 													R[IR[1:0]] <= VALUE;
+													state <= STATE_FETCH_PREP;																						
 												end
 										2'b01 : begin
 													$display("LOAD R%d,[0x%h]",IR[1:0], {DS, VALUE});												
@@ -497,7 +519,7 @@ module grom_cpu(
 													ioreq <= 0;
 													RESULT_REG <= IR[1:0];
 													
-													state <= STATE_LOAD_VALUE_PREP;
+													state <= STATE_LOAD_VALUE;
 												end
 										2'b10 : begin
 													$display("STORE [0x%h],R%d", {DS, VALUE}, IR[1:0]);
@@ -510,22 +532,19 @@ module grom_cpu(
 												end
 										2'b11 : begin
 													$display("Unused opcode %h",IR);
+													state <= STATE_FETCH_PREP;
 												end
 									endcase
 								end
 						endcase
 					end
-				STATE_LOAD_VALUE_PREP :
-					begin
-						// Sync with memory due to CLK
-						state <= STATE_LOAD_VALUE;
-					end
 				STATE_LOAD_VALUE :
 					begin
+						// Sync with memory due to CLK
 						R[RESULT_REG] <= data_in;
+						we	  <= 0;
 						state <= STATE_FETCH_PREP;
-					end	
-				
+					end
 				STATE_ALU_RESULT :
 					begin
 						R[RESULT_REG] <= alu_res;

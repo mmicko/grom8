@@ -41,7 +41,7 @@ module grom_top
  grom_cpu cpu(.clk(i_Clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq),.hlt(hlt));
 
  assign mem_enable = we & ~ioreq;
- ram_memory memory(.clk(i_Clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out));
+ ram_memory memory(.clk(i_Clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out),.memreq(~ioreq));
  
  always @(posedge i_Clk)
 	begin
