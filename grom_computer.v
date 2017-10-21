@@ -23,6 +23,9 @@ module grom_computer
 		if(ioreq==1 && we==1)
 		begin
 			display_out <= memory_in;
+			`ifdef DISASSEMBLY
+			$display("Display output : %h", memory_in);
+			`endif
 		end
 	end
 endmodule
