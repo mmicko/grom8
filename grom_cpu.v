@@ -27,7 +27,8 @@ module grom_cpu(
 	parameter STATE_EXECUTE_DBL       = 4'b0111;
 	parameter STATE_LOAD_VALUE        = 4'b1000;
 	parameter STATE_LOAD_VALUE_WAIT   = 4'b1001;
-	parameter STATE_ALU_RESULT        = 4'b1010;
+	parameter STATE_ALU_RESULT_WAIT   = 4'b1010;
+	parameter STATE_ALU_RESULT        = 4'b1011;
 	
 	reg [3:0] state = STATE_RESET;
 
@@ -38,12 +39,12 @@ module grom_cpu(
 	reg [1:0]  RESULT_REG;
 	
 	wire [7:0] alu_res;
-	wire alu_C;
-	wire alu_Z;
-	wire alu_S;
+	wire alu_CF;
+	wire alu_ZF;
+	wire alu_SF;
 	reg jump;
 	
-	alu alu(.A(alu_a),.B(alu_b),.operation(alu_op),.result(alu_res),.C(alu_C),.Z(alu_Z),.S(alu_S));
+	alu alu(.clk(clk),.A(alu_a),.B(alu_b),.operation(alu_op),.result(alu_res),.CF(alu_CF),.ZF(alu_ZF),.SF(alu_SF));
 	
 	always @(posedge clk)
 	begin
@@ -94,7 +95,7 @@ module grom_cpu(
 					begin
 						//$display("PC=%h", PC);
 						//$display("IR=%h", IR);
-						$display("    PC %h R0 %h R1 %h R2 %h R3 %h CS %h DS %h SP %h ALU [%d %d %d]", PC, R[0], R[1], R[2], R[3], CS, DS, SP, alu_C,alu_S,alu_Z);
+						$display("    PC %h R0 %h R1 %h R2 %h R3 %h CS %h DS %h SP %h ALU [%d %d %d]", PC, R[0], R[1], R[2], R[3], CS, DS, SP, alu_CF,alu_SF,alu_ZF);
 						//
 						if (IR[7])
 						begin
@@ -119,7 +120,7 @@ module grom_cpu(
 										RESULT_REG <= 0;         // result in R0
 										alu_op  <= { 3'b000, IR[3:2] };
 										
-										state   <= STATE_ALU_RESULT;
+										state   <= STATE_ALU_RESULT_WAIT;
 										
 										case(IR[3:2])
 											2'b00 : begin													
@@ -142,7 +143,7 @@ module grom_cpu(
 										alu_b   <= R[IR[1:0]];
 										RESULT_REG <= 0;         // result in R0
 										alu_op  <= { 3'b001, IR[3:2] };
-										state   <= STATE_ALU_RESULT;
+										state   <= STATE_ALU_RESULT_WAIT;
 										case(IR[3:2])
 											2'b00 : begin													
 													$display("AND R%d",IR[1:0]);
@@ -166,7 +167,7 @@ module grom_cpu(
 										alu_op  <= {3'b010, IR[3:2] };
 										
 										// CMP and TEST are not storing result
-										state   <= IR[3] ? STATE_FETCH_PREP : STATE_ALU_RESULT; 										
+										state   <= IR[3] ? STATE_FETCH_PREP : STATE_ALU_RESULT_WAIT;
 										case(IR[3:2])
 											2'b00 : begin													
 													$display("INC R%d",IR[1:0]);
@@ -216,7 +217,7 @@ module grom_cpu(
 														$display("RCR");
 														end
 											endcase
-											state   <= STATE_ALU_RESULT;
+											state   <= STATE_ALU_RESULT_WAIT;
 										end
 										else
 										begin
@@ -354,32 +355,32 @@ module grom_cpu(
 											3'b001 :
 												begin
 													$display("JC %h ",{CS, VALUE[7:0] });
-													jump = (alu_C==1);
+													jump = (alu_CF==1);
 												end
 											3'b010 :
 												begin
 													$display("JNC %h ",{CS, VALUE[7:0] });
-													jump = (alu_C==0);												
+													jump = (alu_CF==0);												
 												end
 											3'b011 :
 												begin
 													$display("JM %h ",{CS, VALUE[7:0] });
-													jump = (alu_S==1);
+													jump = (alu_SF==1);
 												end
 											3'b100 :
 												begin
 													$display("JP %h ",{CS, VALUE[7:0] });
-													jump = (alu_S==0);
+													jump = (alu_SF==0);
 												end
 											3'b101 :
 												begin
 													$display("JZ %h ",{CS, VALUE[7:0] });
-													jump = (alu_Z==1);
+													jump = (alu_ZF==1);
 												end
 											3'b110 :
 												begin
 													$display("JNZ %h ",{CS, VALUE[7:0] });
-													jump = (alu_Z==0);												
+													jump = (alu_ZF==0);												
 												end
 											3'b111 :
 												begin
@@ -408,32 +409,32 @@ module grom_cpu(
 											3'b001 :
 												begin
 													$display("JRC %h ",{CS, VALUE[7:0] });
-													jump = (alu_C==1);
+													jump = (alu_CF==1);
 												end
 											3'b010 :
 												begin
 													$display("JRNC %h ",{CS, VALUE[7:0] });
-													jump = (alu_C==0);
+													jump = (alu_CF==0);
 												end
 											3'b011 :
 												begin
 													$display("JRM %h ",{CS, VALUE[7:0] });
-													jump = (alu_S==1);
+													jump = (alu_SF==1);
 												end
 											3'b100 :
 												begin
 													$display("JRP %h ",{CS, VALUE[7:0] });
-													jump = (alu_S==0);
+													jump = (alu_SF==0);
 												end
 											3'b101 :
 												begin
 													$display("JRZ %h ",{CS, VALUE[7:0] });
-													jump = (alu_Z==1);
+													jump = (alu_ZF==1);
 												end
 											3'b110 :
 												begin
 													$display("JRNZ %h ",{CS, VALUE[7:0] });
-													jump = (alu_Z==0);
+													jump = (alu_ZF==0);
 												end
 											3'b111 :
 												begin
@@ -560,6 +561,10 @@ module grom_cpu(
 						we	  <= 0;
 						state <= STATE_FETCH_PREP;
 					end
+				STATE_ALU_RESULT_WAIT :
+					begin
+						state <= STATE_ALU_RESULT;
+					end				
 				STATE_ALU_RESULT :
 					begin
 						R[RESULT_REG] <= alu_res;
