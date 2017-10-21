@@ -11,13 +11,13 @@ module grom_computer
  wire mem_enable;
  wire  we;
  wire ioreq;
- 
+
  grom_cpu cpu(.clk(clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq),.hlt(hlt));
 
  assign mem_enable = we & ~ioreq;
- 
+
  ram_memory memory(.clk(clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out));
- 
+
  always @(posedge clk)
 	begin
 		if(ioreq==1 && we==1)

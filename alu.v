@@ -1,5 +1,5 @@
 module alu(
-    input clk,
+	input clk,
 	input [7:0] A,
 	input [7:0] B,
 	input [4:0] operation,
@@ -8,7 +8,7 @@ module alu(
 	output reg ZF,
 	output reg SF
 );
-	
+
 	parameter ALU_OP_ADD = 5'b00000;
 	parameter ALU_OP_SUB = 5'b00001;
 	parameter ALU_OP_ADC = 5'b00010;
@@ -24,23 +24,23 @@ module alu(
 	parameter ALU_OP_CMP = 5'b01010;
 	parameter ALU_OP_TST = 5'b01011;
 
-	parameter ALU_OP_SHL = 5'b10000; 
-	parameter ALU_OP_SHR = 5'b10001; 
-	parameter ALU_OP_SAL = 5'b10010; 
-	parameter ALU_OP_SAR = 5'b10011; 
+	parameter ALU_OP_SHL = 5'b10000;
+	parameter ALU_OP_SHR = 5'b10001;
+	parameter ALU_OP_SAL = 5'b10010;
+	parameter ALU_OP_SAR = 5'b10011;
 
 	parameter ALU_OP_ROL = 5'b10100;
-	parameter ALU_OP_ROR = 5'b10101; 
+	parameter ALU_OP_ROR = 5'b10101;
 	parameter ALU_OP_RCL = 5'b10110;
 	parameter ALU_OP_RCR = 5'b10111;
-	
+
 	reg [8:0] tmp;
-	
-	always @(posedge clk)          
+
+	always @(posedge clk)
 	begin
 		case (operation)
 			ALU_OP_ADD :
-				begin					
+				begin
 					{ CF, result } = A + B;
 					ZF = result == 0;
 					SF = result[7];
@@ -121,21 +121,21 @@ module alu(
 					ZF = tmp == 0;
 					SF = tmp[7];
 				end
-			ALU_OP_SHL : 
+			ALU_OP_SHL :
 				begin
 					result = { A[6:0], 1'b0};
 					CF = A[7];
 					ZF = result == 0;
 					SF = result[7];
 				end
-			ALU_OP_SHR : 
+			ALU_OP_SHR :
 				begin
 					result = { 1'b0, A[7:1]};
 					CF = A[0];
 					ZF = result == 0;
 					SF = result[7];
 				end
-			ALU_OP_SAL : 
+			ALU_OP_SAL :
 				begin
 					// Same as SHL
 					result = { A[6:0], 1'b0};
@@ -143,7 +143,7 @@ module alu(
 					ZF = result == 0;
 					SF = result[7];
 				end
-			ALU_OP_SAR : 
+			ALU_OP_SAR :
 				begin
 					result = { A[7], A[7:1]};
 					CF = A[0];
@@ -157,7 +157,7 @@ module alu(
 					ZF = result == 0;
 					SF = result[7];
 				end
-			ALU_OP_ROR : 
+			ALU_OP_ROR :
 				begin
 					result = { A[0], A[7:1]};
 					CF = A[0];

@@ -1,7 +1,7 @@
 module grom_top
   (input  i_Clk,        // Main Clock
    input  i_Switch_1,   // SW1 button
-   
+
    output o_LED_1,
    output o_LED_2,
    output o_LED_3,
@@ -26,9 +26,9 @@ module grom_top
 
  wire [7:0] display_out;
  wire hlt;
- 
+
  grom_computer cpu(.clk(i_Clk),.reset(i_Switch_1),.hlt(hlt),.display_out(display_out));
-	
+
  hex_to_7seg upper_digit
   (.i_Clk(i_Clk),
    .i_Value(display_out[7:4]),

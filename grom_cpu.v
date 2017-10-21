@@ -16,7 +16,7 @@ module grom_cpu(
 	reg[3:0] DS;    // Data segment regiser
 	reg[11:0] SP;    // Stack pointer regiser
 	reg[7:0] R[0:3]; // General purpose registers
-	
+
 	parameter STATE_RESET             = 4'b0000;
 	parameter STATE_FETCH_PREP        = 4'b0001;
 	parameter STATE_FETCH_WAIT        = 4'b0010;
@@ -29,29 +29,29 @@ module grom_cpu(
 	parameter STATE_LOAD_VALUE_WAIT   = 4'b1001;
 	parameter STATE_ALU_RESULT_WAIT   = 4'b1010;
 	parameter STATE_ALU_RESULT        = 4'b1011;
-	
+
 	reg [3:0] state = STATE_RESET;
 
 	reg [7:0]  alu_a;
 	reg [7:0]  alu_b;
 	reg [4:0]  alu_op;
-	
+
 	reg [1:0]  RESULT_REG;
-	
+
 	wire [7:0] alu_res;
 	wire alu_CF;
 	wire alu_ZF;
 	wire alu_SF;
 	reg jump;
-	
+
 	alu alu(.clk(clk),.A(alu_a),.B(alu_b),.operation(alu_op),.result(alu_res),.CF(alu_CF),.ZF(alu_ZF),.SF(alu_SF));
-	
+
 	always @(posedge clk)
 	begin
 		if (reset)
 		begin
 			state <= STATE_RESET;
-			hlt   <= 0;			
+			hlt   <= 0;
 		end
 		else
 		begin
@@ -74,7 +74,7 @@ module grom_cpu(
 						addr  <= PC;
 						we    <= 0;
 						ioreq <= 0;
-						
+
 						state <= STATE_FETCH_WAIT;
 					end
 
@@ -103,7 +103,7 @@ module grom_cpu(
 							PC    <= PC + 1;
 						end
 						else
-						begin							
+						begin
 							case(IR[6:4])
 								3'b000 :
 									begin
@@ -119,12 +119,12 @@ module grom_cpu(
 										alu_b   <= R[IR[1:0]];
 										RESULT_REG <= 0;         // result in R0
 										alu_op  <= { 3'b000, IR[3:2] };
-										
+
 										state   <= STATE_ALU_RESULT_WAIT;
-										
+
 										`ifdef DISASSEMBLY
 										case(IR[3:2])
-											2'b00 : begin													
+											2'b00 : begin
 													$display("ADD R%d",IR[1:0]);
 													end
 											2'b01 : begin
@@ -148,7 +148,7 @@ module grom_cpu(
 										state   <= STATE_ALU_RESULT_WAIT;
 										`ifdef DISASSEMBLY
 										case(IR[3:2])
-											2'b00 : begin													
+											2'b00 : begin
 													$display("AND R%d",IR[1:0]);
 													end
 											2'b01 : begin
@@ -160,7 +160,7 @@ module grom_cpu(
 											2'b11 : begin
 													$display("XOR R%d",IR[1:0]);
 													end
-										endcase										
+										endcase
 										`endif
 									end
 								3'b011 :
@@ -169,12 +169,12 @@ module grom_cpu(
 										alu_b   <= R[IR[1:0]]; // second input REG
 										RESULT_REG <= IR[1:0];    // result in REG
 										alu_op  <= {3'b010, IR[3:2] };
-										
+
 										// CMP and TEST are not storing result
 										state   <= IR[3] ? STATE_FETCH_PREP : STATE_ALU_RESULT_WAIT;
 										`ifdef DISASSEMBLY
 										case(IR[3:2])
-											2'b00 : begin													
+											2'b00 : begin
 													$display("INC R%d",IR[1:0]);
 													end
 											2'b01 : begin
@@ -199,7 +199,7 @@ module grom_cpu(
 											alu_op  <= { 2'b10, IR[2:0] };
 											`ifdef DISASSEMBLY
 											case(IR[2:0])
-												3'b000 : begin													
+												3'b000 : begin
 														$display("SHL");
 														end
 												3'b001 : begin
@@ -211,7 +211,7 @@ module grom_cpu(
 												3'b011 : begin
 														$display("SAR");
 														end
-												3'b100 : begin													
+												3'b100 : begin
 														$display("ROL");
 														end
 												3'b101 : begin
@@ -237,9 +237,9 @@ module grom_cpu(
 												addr     <= SP;
 												we       <= 1;
 												ioreq    <= 0;
-												data_out <= R[IR[1:0]];												
-												SP	     <= SP - 1;
-												state    <= STATE_FETCH_PREP;												
+												data_out <= R[IR[1:0]];
+												SP       <= SP - 1;
+												state    <= STATE_FETCH_PREP;
 											end
 											else
 											begin
@@ -250,10 +250,10 @@ module grom_cpu(
 												we    <= 0;
 												ioreq <= 0;
 												RESULT_REG <= IR[1:0];
-												SP	  <= SP + 1;
+												SP    <= SP + 1;
 												state <= STATE_LOAD_VALUE_WAIT;
-											end											
-										end										
+											end
+										end
 									end
 								3'b101 :
 									begin
@@ -264,7 +264,7 @@ module grom_cpu(
 										we    <= 0;
 										ioreq <= 0;
 										RESULT_REG <= IR[3:2];
-										
+
 										state <= STATE_LOAD_VALUE_WAIT;
 									end
 								3'b110 :
@@ -276,7 +276,7 @@ module grom_cpu(
 										we       <= 1;
 										ioreq    <= 0;
 										data_out <= R[IR[1:0]];
-										
+
 										state    <= STATE_FETCH_PREP;
 									end
 								3'b111 :
@@ -307,7 +307,7 @@ module grom_cpu(
 																	we       <= 1;
 																	ioreq    <= 0;
 																	data_out <= { 4'b0000, CS};
-																	SP	     <= SP - 1;
+																	SP       <= SP - 1;
 																	state    <= STATE_FETCH_PREP;
 																	end
 															2'b01 : begin
@@ -318,7 +318,7 @@ module grom_cpu(
 																	we       <= 1;
 																	ioreq    <= 0;
 																	data_out <= { 4'b0000, DS};
-																	SP	     <= SP - 1;
+																	SP       <= SP - 1;
 																	state    <= STATE_FETCH_PREP;
 																	end
 															2'b10 : begin
@@ -354,7 +354,7 @@ module grom_cpu(
 															2'b11 : begin
 																	hlt <= 1;
 																	`ifdef DISASSEMBLY
-																	$display("HALT");																	
+																	$display("HALT");
 																	`endif
 																	end
 														endcase
@@ -362,7 +362,7 @@ module grom_cpu(
 												end
 										endcase
 									end
-							endcase							
+							endcase
 						end
 					end
 				STATE_FETCH_VALUE_PREP :
@@ -376,7 +376,7 @@ module grom_cpu(
 						state <= STATE_EXECUTE_DBL;
 					end
 				STATE_EXECUTE_DBL :
-					begin						
+					begin
 						case(IR[6:4])
 							3'b000 :
 								begin
@@ -402,7 +402,7 @@ module grom_cpu(
 													`ifdef DISASSEMBLY
 													$display("JNC %h ",{CS, VALUE[7:0] });
 													`endif
-													jump = (alu_CF==0);												
+													jump = (alu_CF==0);
 												end
 											3'b011 :
 												begin
@@ -430,7 +430,7 @@ module grom_cpu(
 													`ifdef DISASSEMBLY
 													$display("JNZ %h ",{CS, VALUE[7:0] });
 													`endif
-													jump = (alu_ZF==0);												
+													jump = (alu_ZF==0);
 												end
 											3'b111 :
 												begin
@@ -439,15 +439,15 @@ module grom_cpu(
 													`endif
 													jump = 0;
 												end
-										endcase								
-										
+										endcase
+
 										if (jump)
 										begin
 											PC    <= { CS, VALUE[7:0] };
 											addr  <= { CS, VALUE[7:0] };
 											we    <= 0;
-											ioreq <= 0;			
-										end												
+											ioreq <= 0;
+										end
 										state <= STATE_FETCH_PREP;
 									end
 								else
@@ -505,17 +505,17 @@ module grom_cpu(
 											3'b111 :
 												begin
 													`ifdef DISASSEMBLY
-													$display("Unused opcode %h",IR);							
+													$display("Unused opcode %h",IR);
 													`endif
 													jump = 0;
 												end
-										endcase								
+										endcase
 										if (jump)
 										begin
 											PC    <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
 											addr  <= PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]};
 											we    <= 0;
-											ioreq <= 0;			
+											ioreq <= 0;
 										end
 										state <= STATE_FETCH_PREP;
 									end
@@ -529,14 +529,14 @@ module grom_cpu(
 									addr  <= { IR[3:0], VALUE[7:0] };
 									we    <= 0;
 									ioreq <= 0;
-									state <= STATE_FETCH_PREP;									
+									state <= STATE_FETCH_PREP;
 								end
 							3'b010 :
 								begin
 									`ifdef DISASSEMBLY
 									$display("CALL %h ",{ IR[3:0], VALUE[7:0] });
 									`endif
-									state <= STATE_FETCH_PREP;									
+									state <= STATE_FETCH_PREP;
 								end
 							3'b011 :
 								begin
@@ -544,7 +544,7 @@ module grom_cpu(
 									$display("MOV SP,%h ",{ IR[3:0], VALUE[7:0] });
 									`endif
 									SP <= { IR[3:0], VALUE[7:0] };
-									state <= STATE_FETCH_PREP;									
+									state <= STATE_FETCH_PREP;
 								end
 							3'b100 :
 								begin
@@ -554,8 +554,8 @@ module grom_cpu(
 									ioreq <= 1;
 									we    <= 0;
 									addr  <= { 4'b0000, VALUE };
-									RESULT_REG <= IR[1:0];			
-									state    <= STATE_LOAD_VALUE_WAIT;	
+									RESULT_REG <= IR[1:0];
+									state    <= STATE_LOAD_VALUE_WAIT;
 								end
 							3'b101 :
 								begin
@@ -565,8 +565,8 @@ module grom_cpu(
 									ioreq <= 1;
 									we    <= 1;
 									addr  <= { 4'b0000, VALUE };
-									data_out <= R[IR[1:0]];									
-									state    <= STATE_FETCH_PREP;									
+									data_out <= R[IR[1:0]];
+									state    <= STATE_FETCH_PREP;
 								end
 							3'b110 :
 								begin
@@ -577,48 +577,48 @@ module grom_cpu(
 												$display("MOV CS,0x%h",VALUE);
 												`endif
 												CS <= VALUE[3:0];
-												state <= STATE_FETCH_PREP;									
+												state <= STATE_FETCH_PREP;
 												end
 										2'b01 : begin
 												`ifdef DISASSEMBLY
 												$display("MOV DS,0x%h",VALUE);
 												`endif
 												DS <= VALUE[3:0];
-												state <= STATE_FETCH_PREP;									
+												state <= STATE_FETCH_PREP;
 												end
 										2'b10 : begin
 												`ifdef DISASSEMBLY
 												$display("Unused opcode %h",IR);
 												`endif
-												state <= STATE_FETCH_PREP;									
+												state <= STATE_FETCH_PREP;
 												end
 										2'b11 : begin
 												`ifdef DISASSEMBLY
 												$display("Unused opcode %h",IR);
 												`endif
-												state <= STATE_FETCH_PREP;									
-												end								
+												state <= STATE_FETCH_PREP;
+												end
 									endcase
 								end
 							3'b111 :
 								begin
 									case(IR[3:2])
-										2'b00 : begin												
+										2'b00 : begin
 													`ifdef DISASSEMBLY
 													$display("MOV R%d,0x%h",IR[1:0],VALUE);
 													`endif
 													R[IR[1:0]] <= VALUE;
-													state <= STATE_FETCH_PREP;																						
+													state <= STATE_FETCH_PREP;
 												end
 										2'b01 : begin
 													`ifdef DISASSEMBLY
-													$display("LOAD R%d,[0x%h]",IR[1:0], {DS, VALUE});												
+													$display("LOAD R%d,[0x%h]",IR[1:0], {DS, VALUE});
 													`endif
 													addr  <= { DS, VALUE };
 													we    <= 0;
 													ioreq <= 0;
 													RESULT_REG <= IR[1:0];
-													
+
 													state <= STATE_LOAD_VALUE_WAIT;
 												end
 										2'b10 : begin
@@ -629,8 +629,8 @@ module grom_cpu(
 													we       <= 1;
 													ioreq    <= 0;
 													data_out <= R[IR[1:0]];
-													
-													state    <= STATE_FETCH_PREP;												
+
+													state    <= STATE_FETCH_PREP;
 												end
 										2'b11 : begin
 													`ifdef DISASSEMBLY
@@ -650,23 +650,23 @@ module grom_cpu(
 				STATE_LOAD_VALUE :
 					begin
 						R[RESULT_REG] <= data_in;
-						we	  <= 0;
+						we    <= 0;
 						state <= STATE_FETCH_PREP;
 					end
 				STATE_ALU_RESULT_WAIT :
 					begin
 						state <= STATE_ALU_RESULT;
-					end				
+					end
 				STATE_ALU_RESULT :
 					begin
 						R[RESULT_REG] <= alu_res;
 						state <= STATE_FETCH_PREP;
-					end				
+					end
 				default :
 					begin
 						state <= STATE_FETCH_PREP;
-					end				
-			endcase			
+					end
+			endcase
 		end
 	end
 endmodule
