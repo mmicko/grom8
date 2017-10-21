@@ -42,145 +42,118 @@ module alu(
 			ALU_OP_ADD :
 				begin
 					{ CF, result } = A + B;
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_SUB :
 				begin
 					{ CF, result } = A - B;
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_ADC :
 				begin
 					{ CF, result } = A + B + { 7'b0000000, CF };
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_SBC :
 				begin
 					{ CF, result } = A - B - { 7'b0000000, CF };
-					ZF = result == 0;
-					SF = result[7];
 				end
 
 			ALU_OP_AND :
 				begin
 					result = A & B;
 					CF = 0;
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_OR :
 				begin
 					result = A | B;
 					CF = 0;
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_NOT :
 				begin
 					result = ~A;
 					CF = 0;
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_XOR :
 				begin
 					result = A ^ B;
 					CF = 0;
-					ZF = result == 0;
-					SF = result[7];
 				end
 
 			ALU_OP_INC :
 				begin
 					{CF, result } = B + 1;
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_DEC :
 				begin
 					{CF, result } = B - 1;
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_CMP :
 				begin
-					tmp = A - B;
 					result = A; // no result change
+					tmp = A - B;
 					CF = tmp[8];
-					ZF = tmp == 0;
-					SF = tmp[7];
 				end
 			ALU_OP_TST :
 				begin
 					tmp = {1'b0, A & B};
 					result = A; // no result change
 					CF = 0;
-					ZF = tmp == 0;
-					SF = tmp[7];
 				end
 			ALU_OP_SHL :
 				begin
 					result = { A[6:0], 1'b0};
 					CF = A[7];
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_SHR :
 				begin
 					result = { 1'b0, A[7:1]};
 					CF = A[0];
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_SAL :
 				begin
 					// Same as SHL
 					result = { A[6:0], 1'b0};
 					CF = A[7];
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_SAR :
 				begin
 					result = { A[7], A[7:1]};
 					CF = A[0];
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_ROL :
 				begin
 					result = { A[6:0], A[7]};
 					CF = A[7];
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_ROR :
 				begin
 					result = { A[0], A[7:1]};
 					CF = A[0];
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_RCL :
 				begin
 					result = { A[6:0], CF};
 					CF = A[7];
-					ZF = result == 0;
-					SF = result[7];
 				end
 			ALU_OP_RCR :
 				begin
 					result = { CF, A[7:1]};
 					CF = A[0];
-					ZF = result == 0;
-					SF = result[7];
 				end
 			default :
 				begin
 					result = A; // no result change
+				end
+		endcase
+
+		case (operation)
+			ALU_OP_CMP, ALU_OP_TST :
+				begin
+					ZF = tmp == 0;
+					SF = tmp[7];
+				end
+			default :
+				begin
+					ZF = result == 0;
+					SF = result[7];
 				end
 		endcase
 	end
