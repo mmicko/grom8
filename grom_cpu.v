@@ -16,21 +16,28 @@ module grom_cpu(
 	reg[3:0] DS;    // Data segment regiser
 	reg[11:0] SP;    // Stack pointer regiser
 	reg[7:0] R[0:3]; // General purpose registers
+	reg[11:0] FUTURE_PC;   // PC to jump to
 
-	parameter STATE_RESET             = 4'b0000;
-	parameter STATE_FETCH_PREP        = 4'b0001;
-	parameter STATE_FETCH_WAIT        = 4'b0010;
-	parameter STATE_FETCH             = 4'b0011;
-	parameter STATE_EXECUTE           = 4'b0100;
-	parameter STATE_FETCH_VALUE_PREP  = 4'b0101;
-	parameter STATE_FETCH_VALUE       = 4'b0110;
-	parameter STATE_EXECUTE_DBL       = 4'b0111;
-	parameter STATE_LOAD_VALUE        = 4'b1000;
-	parameter STATE_LOAD_VALUE_WAIT   = 4'b1001;
-	parameter STATE_ALU_RESULT_WAIT   = 4'b1010;
-	parameter STATE_ALU_RESULT        = 4'b1011;
+	parameter STATE_RESET             = 5'b00000;
+	parameter STATE_FETCH_PREP        = 5'b00001;
+	parameter STATE_FETCH_WAIT        = 5'b00010;
+	parameter STATE_FETCH             = 5'b00011;
+	parameter STATE_EXECUTE           = 5'b00100;
+	parameter STATE_FETCH_VALUE_PREP  = 5'b00101;
+	parameter STATE_FETCH_VALUE       = 5'b00110;
+	parameter STATE_EXECUTE_DBL       = 5'b00111;
+	parameter STATE_LOAD_VALUE        = 5'b01000;
+	parameter STATE_LOAD_VALUE_WAIT   = 5'b01001;
+	parameter STATE_ALU_RESULT_WAIT   = 5'b01010;
+	parameter STATE_ALU_RESULT        = 5'b01011;
+	parameter STATE_PUSH_PC_LOW       = 5'b01100;
+	parameter STATE_JUMP              = 5'b01101;
+	parameter STATE_RET_VALUE_WAIT    = 5'b01110;
+	parameter STATE_RET_VALUE         = 5'b01111;
+	parameter STATE_RET_VALUE_WAIT2   = 5'b10000;
+	parameter STATE_RET_VALUE2        = 5'b10001;
 
-	reg [3:0] state = STATE_RESET;
+	reg [4:0] state = STATE_RESET;
 
 	reg [7:0]  alu_a;
 	reg [7:0]  alu_b;
@@ -244,7 +251,7 @@ module grom_cpu(
 											else
 											begin
 												`ifdef DISASSEMBLY
-												$display("POP R%d",IR[1:0]);
+												$display("IR %h POP R%d",IR,IR[1:0]);
 												`endif
 												addr  <= SP + 1;
 												we    <= 0;
@@ -338,27 +345,34 @@ module grom_cpu(
 														case(IR[1:0])
 															2'b00 : begin
 																	`ifdef DISASSEMBLY
-																	$display("POP CS");
+																	$display("Unused opcode");
 																	`endif
+																	state <= STATE_FETCH_PREP;
 																	end
 															2'b01 : begin
 																	`ifdef DISASSEMBLY
-																	$display("POP DS");
+																	$display("Unused opcode");
 																	`endif
+																	state <= STATE_FETCH_PREP;
 																	end
 															2'b10 : begin
 																	`ifdef DISASSEMBLY
 																	$display("RET");
 																	`endif
+																	addr  <= SP + 1;
+																	we    <= 0;
+																	ioreq <= 0;
+																	SP    <= SP + 1;
+																	state <= STATE_RET_VALUE_WAIT;
 																	end
 															2'b11 : begin
 																	hlt <= 1;
 																	`ifdef DISASSEMBLY
 																	$display("HALT");
 																	`endif
+																	state <= STATE_FETCH_PREP;
 																	end
 														endcase
-														state <= STATE_FETCH_PREP;
 												end
 										endcase
 									end
@@ -536,7 +550,13 @@ module grom_cpu(
 									`ifdef DISASSEMBLY
 									$display("CALL %h ",{ IR[3:0], VALUE[7:0] });
 									`endif
-									state <= STATE_FETCH_PREP;
+									FUTURE_PC <= { IR[3:0], VALUE[7:0] };
+									addr     <= SP;
+									we       <= 1;
+									ioreq    <= 0;
+									data_out <= { 4'b0000, PC[11:8]};
+									SP       <= SP - 1;
+									state    <= STATE_PUSH_PC_LOW;
 								end
 							3'b011 :
 								begin
@@ -661,6 +681,50 @@ module grom_cpu(
 					begin
 						R[RESULT_REG] <= alu_res;
 						state <= STATE_FETCH_PREP;
+					end
+				STATE_PUSH_PC_LOW :
+					begin
+						addr     <= SP;
+						we       <= 1;
+						ioreq    <= 0;
+						data_out <= PC[7:0];
+						SP       <= SP - 1;
+						state    <= STATE_JUMP;
+					end
+				STATE_JUMP :
+					begin
+						`ifdef DISASSEMBLY
+						$display("Jumping to %h",FUTURE_PC);
+						`endif
+						PC <= FUTURE_PC;
+						state <= STATE_FETCH_PREP;
+					end
+				STATE_RET_VALUE_WAIT :
+					begin
+						// Sync with memory due to CLK
+						state <= STATE_RET_VALUE;
+					end
+				STATE_RET_VALUE :
+					begin
+						FUTURE_PC <= data_in;
+						we    <= 0;
+						state <= STATE_RET_VALUE_WAIT2;
+
+						addr  <= SP + 1;
+						we    <= 0;
+						ioreq <= 0;
+						SP    <= SP + 1;
+					end
+				STATE_RET_VALUE_WAIT2 :
+					begin
+						// Sync with memory due to CLK
+						state <= STATE_RET_VALUE2;
+					end
+				STATE_RET_VALUE2 :
+					begin
+						FUTURE_PC <= FUTURE_PC | data_in << 8;
+						we    <= 0;
+						state <= STATE_JUMP;
 					end
 				default :
 					begin
