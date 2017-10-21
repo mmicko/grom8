@@ -119,7 +119,10 @@ module alu(
 					S = tmp[7];
 					result = A; // no result change
 				end
-				
+			default :
+				begin
+					result = A; // no result change
+				end
 		endcase
 	end
 endmodule

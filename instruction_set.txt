@@ -84,7 +84,7 @@ R0-R3 - registers      (8 bit)
 
 1010 xx	 xx 	val 	CALL val
 
-1011 xx	 xx 	val 	???
+1011 xx	 xx 	val 	MOV SP,val
 
 1100 xx  reg    val     IN reg,[val]
 1101 xx  reg    val     OUT [val],reg

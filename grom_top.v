@@ -1,5 +1,7 @@
 module grom_top
   (input  i_Clk,        // Main Clock
+   input  i_Switch_1,   // SW1 button
+   
    output o_LED_1,
    output o_LED_2,
    output o_LED_3,
@@ -25,8 +27,6 @@ module grom_top
  reg [31:0] counter = 0;
 
  reg prev = 0;
- reg reset = 0;
-
 
  wire [11:0] addr;
  wire [7:0] memory_out;
@@ -38,7 +38,7 @@ module grom_top
  
  reg [7:0] display_out = 8'h00;
 
- grom_cpu cpu(.clk(i_Clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq),.hlt(hlt));
+ grom_cpu cpu(.clk(i_Clk),.reset(i_Switch_1),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq),.hlt(hlt));
 
  assign mem_enable = we & ~ioreq;
  ram_memory memory(.clk(i_Clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out),.memreq(~ioreq));

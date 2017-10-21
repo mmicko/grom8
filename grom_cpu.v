@@ -27,7 +27,8 @@ module grom_cpu(
 	parameter STATE_FETCH_VALUE       = 4'b0110;
 	parameter STATE_EXECUTE_DBL       = 4'b0111;
 	parameter STATE_LOAD_VALUE        = 4'b1000;
-	parameter STATE_ALU_RESULT        = 4'b1001;
+	parameter STATE_LOAD_VALUE_WAIT   = 4'b1001;
+	parameter STATE_ALU_RESULT        = 4'b1010;
 	
 	reg [3:0] state = STATE_RESET;
 
@@ -41,7 +42,6 @@ module grom_cpu(
 	wire alu_C;
 	wire alu_Z;
 	wire alu_S;
-	integer jump;
 	
 	alu alu(.A(alu_a),.B(alu_b),.operation(alu_op),.result(alu_res),.C(alu_C),.Z(alu_Z),.S(alu_S));
 	
@@ -241,7 +241,7 @@ module grom_cpu(
 												ioreq <= 0;
 												RESULT_REG <= IR[1:0];
 												SP	  <= SP + 1;
-												state <= STATE_LOAD_VALUE;
+												state <= STATE_LOAD_VALUE_WAIT;
 											end											
 										end										
 									end
@@ -253,7 +253,7 @@ module grom_cpu(
 										ioreq <= 0;
 										RESULT_REG <= IR[3:2];
 										
-										state <= STATE_LOAD_VALUE;
+										state <= STATE_LOAD_VALUE_WAIT;
 									end
 								3'b110 :
 									begin
@@ -283,9 +283,21 @@ module grom_cpu(
 														case(IR[1:0])
 															2'b00 : begin
 																	$display("PUSH CS");
+																	addr     <= SP;
+																	we       <= 1;
+																	ioreq    <= 0;
+																	data_out <= { 4'b0000, CS};
+																	SP	     <= SP - 1;
+																	state    <= STATE_FETCH_PREP;
 																	end
 															2'b01 : begin
 																	$display("PUSH DS");
+																	addr     <= SP;
+																	we       <= 1;
+																	ioreq    <= 0;
+																	data_out <= { 4'b0000, DS};
+																	SP	     <= SP - 1;
+																	state    <= STATE_FETCH_PREP;
 																	end
 															2'b10 : begin
 																	$display("RET");
@@ -336,6 +348,7 @@ module grom_cpu(
 								begin
 								if (IR[3]==0)
 									begin
+										integer jump = 0;
 										case(IR[2:0])
 											3'b000 :
 												begin
@@ -390,6 +403,7 @@ module grom_cpu(
 									end
 								else
 									begin
+										integer jump = 0;
 										case(IR[2:0])
 											3'b000 :
 												begin
@@ -458,7 +472,8 @@ module grom_cpu(
 								end
 							3'b011 :
 								begin
-									$display("Unused opcode");
+									$display("MOV SP,%h ",{ IR[3:0], VALUE[7:0] });
+									SP <= { IR[3:0], VALUE[7:0] };
 									state <= STATE_FETCH_PREP;									
 								end
 							3'b100 :
@@ -468,7 +483,7 @@ module grom_cpu(
 									we    <= 0;
 									addr  <= { 4'b0000, VALUE };
 									RESULT_REG <= IR[1:0];			
-									state    <= STATE_LOAD_VALUE;									
+									state    <= STATE_LOAD_VALUE_WAIT;	
 								end
 							3'b101 :
 								begin
@@ -514,12 +529,12 @@ module grom_cpu(
 												end
 										2'b01 : begin
 													$display("LOAD R%d,[0x%h]",IR[1:0], {DS, VALUE});												
-													addr  <= { DS, R[IR[1:0]] };
+													addr  <= { DS, VALUE };
 													we    <= 0;
 													ioreq <= 0;
 													RESULT_REG <= IR[1:0];
 													
-													state <= STATE_LOAD_VALUE;
+													state <= STATE_LOAD_VALUE_WAIT;
 												end
 										2'b10 : begin
 													$display("STORE [0x%h],R%d", {DS, VALUE}, IR[1:0]);
@@ -538,16 +553,25 @@ module grom_cpu(
 								end
 						endcase
 					end
-				STATE_LOAD_VALUE :
+				STATE_LOAD_VALUE_WAIT :
 					begin
 						// Sync with memory due to CLK
+						state <= STATE_LOAD_VALUE;
+					end
+				STATE_LOAD_VALUE :
+					begin
 						R[RESULT_REG] <= data_in;
+						$display("data_in : [%h]=%h",addr,data_in);
 						we	  <= 0;
 						state <= STATE_FETCH_PREP;
 					end
 				STATE_ALU_RESULT :
 					begin
 						R[RESULT_REG] <= alu_res;
+						state <= STATE_FETCH_PREP;
+					end				
+				default :
+					begin
 						state <= STATE_FETCH_PREP;
 					end				
 			endcase			

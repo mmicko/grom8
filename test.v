@@ -36,6 +36,11 @@ module test();
 		#300
 		#300
 		#300
+		reset = 1;
+		#20
+		reset = 0;
+		#300
+		#300
 		$finish;
 	end
 endmodule
