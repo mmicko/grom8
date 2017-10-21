@@ -3,8 +3,7 @@ module ram_memory(
   input [11:0] addr,
   input [7:0] data_in,
   input we,
-  output reg [7:0] data_out,
-  input memreq
+  output reg [7:0] data_out
 );
 
   reg [7:0] store[0:4095] /* verilator public_flat */;
@@ -27,31 +26,8 @@ module ram_memory(
   end
 
   always @(posedge clk)
-	if (memreq)
-	begin
-		if (we)
-		begin
-		  if (addr[11:8]==4'hf) 
-		  begin
-			$display("stack write[%h]=%h", addr, data_in);
-		  end
-		  if (addr[11:8]==4'hd) 
-		  begin
-			$display("data write [%h]=%h",addr,  data_in);
-		  end
-		  store[addr] <= data_in;
-		end
-		else
-		begin
-		  if (addr[11:8]==4'hf) 
-		  begin
-			$display("stack read [%h]=%h", addr, store[addr]);
-		  end
-		  if (addr[11:8]==4'hd) 
-		  begin
-			$display("data read [%h]=%h", addr, store[addr]);
-		  end
-		  data_out <= store[addr];
-		end
-	end
+	if (we)
+	  store[addr] <= data_in;
+	else
+	  data_out <= store[addr];
 endmodule

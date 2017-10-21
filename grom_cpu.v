@@ -61,7 +61,7 @@ module grom_cpu(
 						PC    <= 12'h000;
 						state <= STATE_FETCH_PREP;
 						CS    <= 4'h0;
-						DS    <= 4'hd;
+						DS    <= 4'h0;
 						R[0]  <= 8'h00;
 						R[1]  <= 8'h00;
 						R[2]  <= 8'h00;
@@ -93,10 +93,9 @@ module grom_cpu(
 					end
 				STATE_EXECUTE :
 					begin
-						//$display("PC=%h", PC);
-						//$display("IR=%h", IR);
+						`ifdef DISASSEMBLY
 						$display("    PC %h R0 %h R1 %h R2 %h R3 %h CS %h DS %h SP %h ALU [%d %d %d]", PC, R[0], R[1], R[2], R[3], CS, DS, SP, alu_CF,alu_SF,alu_ZF);
-						//
+						`endif
 						if (IR[7])
 						begin
 							addr  <= PC;
@@ -108,8 +107,9 @@ module grom_cpu(
 							case(IR[6:4])
 								3'b000 :
 									begin
+										`ifdef DISASSEMBLY
 										$display("MOV R%d,R%d",IR[3:2],IR[1:0]);
-										// MOV dest,src instruction
+										`endif
 										R[IR[3:2]] <= R[IR[1:0]];
 										state <= STATE_FETCH_PREP;
 									end
@@ -122,6 +122,7 @@ module grom_cpu(
 										
 										state   <= STATE_ALU_RESULT_WAIT;
 										
+										`ifdef DISASSEMBLY
 										case(IR[3:2])
 											2'b00 : begin													
 													$display("ADD R%d",IR[1:0]);
@@ -136,6 +137,7 @@ module grom_cpu(
 													$display("SBC R%d",IR[1:0]);
 													end
 										endcase
+										`endif
 									end
 								3'b010 :
 									begin
@@ -144,6 +146,7 @@ module grom_cpu(
 										RESULT_REG <= 0;         // result in R0
 										alu_op  <= { 3'b001, IR[3:2] };
 										state   <= STATE_ALU_RESULT_WAIT;
+										`ifdef DISASSEMBLY
 										case(IR[3:2])
 											2'b00 : begin													
 													$display("AND R%d",IR[1:0]);
@@ -158,6 +161,7 @@ module grom_cpu(
 													$display("XOR R%d",IR[1:0]);
 													end
 										endcase										
+										`endif
 									end
 								3'b011 :
 									begin
@@ -168,6 +172,7 @@ module grom_cpu(
 										
 										// CMP and TEST are not storing result
 										state   <= IR[3] ? STATE_FETCH_PREP : STATE_ALU_RESULT_WAIT;
+										`ifdef DISASSEMBLY
 										case(IR[3:2])
 											2'b00 : begin													
 													$display("INC R%d",IR[1:0]);
@@ -182,6 +187,7 @@ module grom_cpu(
 													$display("TST R%d",IR[1:0]);
 													end
 										endcase
+										`endif
 									end
 								3'b100 :
 									begin
@@ -191,6 +197,7 @@ module grom_cpu(
 											// no 2nd input
 											RESULT_REG <= 0;         // result in R0
 											alu_op  <= { 2'b10, IR[2:0] };
+											`ifdef DISASSEMBLY
 											case(IR[2:0])
 												3'b000 : begin													
 														$display("SHL");
@@ -217,13 +224,16 @@ module grom_cpu(
 														$display("RCR");
 														end
 											endcase
+											`endif
 											state   <= STATE_ALU_RESULT_WAIT;
 										end
 										else
 										begin
 											if (IR[2]==0)
 											begin
+												`ifdef DISASSEMBLY
 												$display("PUSH R%d",IR[1:0]);
+												`endif
 												addr     <= SP;
 												we       <= 1;
 												ioreq    <= 0;
@@ -233,7 +243,9 @@ module grom_cpu(
 											end
 											else
 											begin
+												`ifdef DISASSEMBLY
 												$display("POP R%d",IR[1:0]);
+												`endif
 												addr  <= SP + 1;
 												we    <= 0;
 												ioreq <= 0;
@@ -245,7 +257,9 @@ module grom_cpu(
 									end
 								3'b101 :
 									begin
+										`ifdef DISASSEMBLY
 										$display("LOAD R%d,[R%d]", IR[3:2], IR[1:0]);
+										`endif
 										addr  <= { DS, R[IR[1:0]] };
 										we    <= 0;
 										ioreq <= 0;
@@ -255,7 +269,9 @@ module grom_cpu(
 									end
 								3'b110 :
 									begin
+										`ifdef DISASSEMBLY
 										$display("STORE [R%d],R%d", IR[3:2], IR[1:0]);
+										`endif
 										addr     <= { DS, R[IR[3:2]] };
 										we       <= 1;
 										ioreq    <= 0;
@@ -270,17 +286,23 @@ module grom_cpu(
 											2'b00 : begin
 													CS <= R[IR[1:0]][3:0];
 													state <= STATE_FETCH_PREP;
+													`ifdef DISASSEMBLY
 													$display("MOV CS,R%d",IR[1:0]);
+													`endif
 													end
 											2'b01 : begin
 													DS <= R[IR[1:0]][3:0];
 													state <= STATE_FETCH_PREP;
+													`ifdef DISASSEMBLY
 													$display("MOV DS,R%d",IR[1:0]);
+													`endif
 													end
 											2'b10 : begin
 														case(IR[1:0])
 															2'b00 : begin
+																	`ifdef DISASSEMBLY
 																	$display("PUSH CS");
+																	`endif
 																	addr     <= SP;
 																	we       <= 1;
 																	ioreq    <= 0;
@@ -289,7 +311,9 @@ module grom_cpu(
 																	state    <= STATE_FETCH_PREP;
 																	end
 															2'b01 : begin
+																	`ifdef DISASSEMBLY
 																	$display("PUSH DS");
+																	`endif
 																	addr     <= SP;
 																	we       <= 1;
 																	ioreq    <= 0;
@@ -298,10 +322,14 @@ module grom_cpu(
 																	state    <= STATE_FETCH_PREP;
 																	end
 															2'b10 : begin
+																	`ifdef DISASSEMBLY
 																	$display("RET");
+																	`endif
 																	end
 															2'b11 : begin
+																	`ifdef DISASSEMBLY
 																	$display("Unused opcode");
+																	`endif
 																end
 														endcase
 														state <= STATE_FETCH_PREP;
@@ -309,17 +337,25 @@ module grom_cpu(
 											2'b11 : begin
 														case(IR[1:0])
 															2'b00 : begin
+																	`ifdef DISASSEMBLY
 																	$display("POP CS");
+																	`endif
 																	end
 															2'b01 : begin
+																	`ifdef DISASSEMBLY
 																	$display("POP DS");
+																	`endif
 																	end
 															2'b10 : begin
+																	`ifdef DISASSEMBLY
 																	$display("Unused opcode");
+																	`endif
 																	end
 															2'b11 : begin
 																	hlt <= 1;
+																	`ifdef DISASSEMBLY
 																	$display("HALT");																	
+																	`endif
 																	end
 														endcase
 														state <= STATE_FETCH_PREP;
@@ -349,42 +385,58 @@ module grom_cpu(
 										case(IR[2:0])
 											3'b000 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JMP %h ",{ CS, VALUE[7:0] });
+													`endif
 													jump = 1;
 												end
 											3'b001 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JC %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_CF==1);
 												end
 											3'b010 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JNC %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_CF==0);												
 												end
 											3'b011 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JM %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_SF==1);
 												end
 											3'b100 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JP %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_SF==0);
 												end
 											3'b101 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JZ %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_ZF==1);
 												end
 											3'b110 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JNZ %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_ZF==0);												
 												end
 											3'b111 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("Unused opcode %h",IR);
+													`endif
 													jump = 0;
 												end
 										endcase								
@@ -403,42 +455,58 @@ module grom_cpu(
 										case(IR[2:0])
 											3'b000 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JR %h ", PC + {VALUE[7],VALUE[7],VALUE[7],VALUE[7],VALUE[7:0]} );
+													`endif
 													jump = 1;
 												end
 											3'b001 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JRC %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_CF==1);
 												end
 											3'b010 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JRNC %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_CF==0);
 												end
 											3'b011 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JRM %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_SF==1);
 												end
 											3'b100 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JRP %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_SF==0);
 												end
 											3'b101 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JRZ %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_ZF==1);
 												end
 											3'b110 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("JRNZ %h ",{CS, VALUE[7:0] });
+													`endif
 													jump = (alu_ZF==0);
 												end
 											3'b111 :
 												begin
+													`ifdef DISASSEMBLY
 													$display("Unused opcode %h",IR);							
+													`endif
 													jump = 0;
 												end
 										endcase								
@@ -454,7 +522,9 @@ module grom_cpu(
 								end
 							3'b001 :
 								begin
+									`ifdef DISASSEMBLY
 									$display("JUMP %h ",{ IR[3:0], VALUE[7:0] });
+									`endif
 									PC    <= { IR[3:0], VALUE[7:0] };
 									addr  <= { IR[3:0], VALUE[7:0] };
 									we    <= 0;
@@ -463,18 +533,24 @@ module grom_cpu(
 								end
 							3'b010 :
 								begin
+									`ifdef DISASSEMBLY
 									$display("CALL %h ",{ IR[3:0], VALUE[7:0] });
+									`endif
 									state <= STATE_FETCH_PREP;									
 								end
 							3'b011 :
 								begin
+									`ifdef DISASSEMBLY
 									$display("MOV SP,%h ",{ IR[3:0], VALUE[7:0] });
+									`endif
 									SP <= { IR[3:0], VALUE[7:0] };
 									state <= STATE_FETCH_PREP;									
 								end
 							3'b100 :
 								begin
+									`ifdef DISASSEMBLY
 									$display("IN R%d,[0x%h]",IR[1:0], VALUE);
+									`endif
 									ioreq <= 1;
 									we    <= 0;
 									addr  <= { 4'b0000, VALUE };
@@ -483,12 +559,13 @@ module grom_cpu(
 								end
 							3'b101 :
 								begin
+									`ifdef DISASSEMBLY
 									$display("OUT [0x%h],R%d",VALUE,IR[1:0]);
+									`endif
 									ioreq <= 1;
 									we    <= 1;
 									addr  <= { 4'b0000, VALUE };
-									data_out <= R[IR[1:0]];
-									$display("output value is [0x%h]",R[IR[1:0]]);
+									data_out <= R[IR[1:0]];									
 									state    <= STATE_FETCH_PREP;									
 								end
 							3'b110 :
@@ -496,22 +573,30 @@ module grom_cpu(
 									// Special instuctions
 									case(IR[1:0])
 										2'b00 : begin
+												`ifdef DISASSEMBLY
 												$display("MOV CS,0x%h",VALUE);
+												`endif
 												CS <= VALUE[3:0];
 												state <= STATE_FETCH_PREP;									
 												end
 										2'b01 : begin
+												`ifdef DISASSEMBLY
 												$display("MOV DS,0x%h",VALUE);
+												`endif
 												DS <= VALUE[3:0];
 												state <= STATE_FETCH_PREP;									
 												end
 										2'b10 : begin
-													$display("Unused opcode %h",IR);
-													state <= STATE_FETCH_PREP;									
+												`ifdef DISASSEMBLY
+												$display("Unused opcode %h",IR);
+												`endif
+												state <= STATE_FETCH_PREP;									
 												end
 										2'b11 : begin
-													$display("Unused opcode %h",IR);
-													state <= STATE_FETCH_PREP;									
+												`ifdef DISASSEMBLY
+												$display("Unused opcode %h",IR);
+												`endif
+												state <= STATE_FETCH_PREP;									
 												end								
 									endcase
 								end
@@ -519,12 +604,16 @@ module grom_cpu(
 								begin
 									case(IR[3:2])
 										2'b00 : begin												
+													`ifdef DISASSEMBLY
 													$display("MOV R%d,0x%h",IR[1:0],VALUE);
+													`endif
 													R[IR[1:0]] <= VALUE;
 													state <= STATE_FETCH_PREP;																						
 												end
 										2'b01 : begin
+													`ifdef DISASSEMBLY
 													$display("LOAD R%d,[0x%h]",IR[1:0], {DS, VALUE});												
+													`endif
 													addr  <= { DS, VALUE };
 													we    <= 0;
 													ioreq <= 0;
@@ -533,7 +622,9 @@ module grom_cpu(
 													state <= STATE_LOAD_VALUE_WAIT;
 												end
 										2'b10 : begin
+													`ifdef DISASSEMBLY
 													$display("STORE [0x%h],R%d", {DS, VALUE}, IR[1:0]);
+													`endif
 													addr     <= { DS, VALUE };
 													we       <= 1;
 													ioreq    <= 0;
@@ -542,7 +633,9 @@ module grom_cpu(
 													state    <= STATE_FETCH_PREP;												
 												end
 										2'b11 : begin
+													`ifdef DISASSEMBLY
 													$display("Unused opcode %h",IR);
+													`endif
 													state <= STATE_FETCH_PREP;
 												end
 									endcase
@@ -557,7 +650,6 @@ module grom_cpu(
 				STATE_LOAD_VALUE :
 					begin
 						R[RESULT_REG] <= data_in;
-						$display("data_in : [%h]=%h",addr,data_in);
 						we	  <= 0;
 						state <= STATE_FETCH_PREP;
 					end

@@ -16,7 +16,7 @@ module grom_computer
 
  assign mem_enable = we & ~ioreq;
  
- ram_memory memory(.clk(clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out),.memreq(~ioreq));
+ ram_memory memory(.clk(clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out));
  
  always @(posedge clk)
 	begin
