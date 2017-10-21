@@ -1,90 +1,81 @@
-opcodes
-
-76543210 76543210
-0000
-
-0001xxxx xxxxxxxx  
-0010xxxx xxxxxxxx  
-1111xxxx xxxxxxxx  JMP
-
-
 IR - Instruction register (8 bit)
 PC - Program counter   (12 bit)
 SEG - Segment register (4 bit only used)
 R0-R3 - registers      (8 bit)
 
 
-0000 dst src 		MOV dst, src  
-		
+0000 dst src            MOV dst, src
 
-0001 00  reg        ADD reg    r0 = r0 + reg
-0001 01  reg        SUB reg    r0 = r0 - reg
-0001 10  reg        ADC reg    r0 = r0 + reg + C
-0001 11  reg        SBC reg    r0 = r0 - reg - C
-		            
-0010 00  reg        AND reg    r0 = r0 and reg
-0010 01  reg        OR  reg    r0 = r0 or reg
-0010 10  reg        NOT reg    r0 = not reg
-0010 11  reg        XOR reg    r0 = r0 xor reg
-                    
-0011 00  reg        INC reg    reg = reg + 1 
-0011 01  reg        DEC reg    reg = reg - 1
-0011 10  reg        CMP reg    flags of r0 - reg
-0011 11  reg        TST reg    flags of r0 and reg
+0001 00  reg            ADD reg    r0 = r0 + reg
+0001 01  reg            SUB reg    r0 = r0 - reg
+0001 10  reg            ADC reg    r0 = r0 + reg + C
+0001 11  reg            SBC reg    r0 = r0 - reg - C
 
-0100 00  00         SHL 
-0100 00  01         SHR 
-0100 00  10         SAL 
-0100 00  11         SAR 
-                   
-0100 01  00         ROL
-0100 01  01         ROR 
-0100 01  10         RCL              rotate with carry
-0100 01  11         RCR    		     rotate with carry
-                    
-0100 10  reg        PUSH reg
-0100 11  reg        POP reg
+0010 00  reg            AND reg    r0 = r0 and reg
+0010 01  reg            OR  reg    r0 = r0 or reg
+0010 10  reg            NOT reg    r0 = not reg
+0010 11  reg            XOR reg    r0 = r0 xor reg
 
-0101 dst src	    LOAD dst, [src]
+0011 00  reg            INC reg    reg = reg + 1
+0011 01  reg            DEC reg    reg = reg - 1
+0011 10  reg            CMP reg    flags of r0 - reg
+0011 11  reg            TST reg    flags of r0 and reg
 
-0110 dst src        STORE [dst], src
+0100 00  00             SHL
+0100 00  01             SHR
+0100 00  10             SAL
+0100 00  11             SAR
 
-0111 00  reg        MOV CS, reg
-0111 01  reg        MOV DS, reg
-0111 10  00         PUSH CS
-0111 10  01         PUSH DS
-0111 10  10         RET
-0111 10  11         ???
-0111 11  00         POP CS
-0111 11  01         POP DS
-0111 11  10         ???
-0111 11  11         HLT
+0100 01  00             ROL
+0100 01  01             ROR
+0100 01  10             RCL              rotate with carry
+0100 01  11             RCR              rotate with carry
+
+0100 10  reg            PUSH reg
+0100 11  reg            POP reg
+
+0101 dst src            LOAD dst, [src]
+
+0110 dst src            STORE [dst], src
+
+0111 00  reg            MOV CS, reg
+0111 01  reg            MOV DS, reg
+
+0111 10  00             PUSH CS
+0111 10  01             PUSH DS
+0111 10  10             RET
+0111 10  11             ???
+
+0111 11  00             POP CS
+0111 11  01             POP DS
+0111 11  10             ???
+0111 11  11             HLT
 
 ============================================================
 
-1000 00  00 	val 	JMP  val (unconditionally jump) 
-1000 00  01 	val 	JC   val (carry=1 jump) 
-1000 00  10 	val 	JNC  val (carry=0 jump) 
-1000 00  11 	val 	JM   val (sign=1 jump) 
-1000 01  00 	val 	JP   val (sign=0 jump) 
-1000 01  01 	val 	JZ   val (zero=1 jump) 
-1000 01  10 	val 	JNZ  val (zero=0 jump) 
-1000 01  11 	val 	??? 
+1000 00  00     val     JMP  val (unconditionally jump)
+1000 00  01     val     JC   val (carry=1 jump)
+1000 00  10     val     JNC  val (carry=0 jump)
+1000 00  11     val     JM   val (sign=1 jump)
+1000 01  00     val     JP   val (sign=0 jump)
+1000 01  01     val     JZ   val (zero=1 jump)
+1000 01  10     val     JNZ  val (zero=0 jump)
+1000 01  11     val     ???
 
-1000 10  00 	val 	JR   val (unconditionally jump) 
-1000 10  01 	val 	JRC  val (carry=1 jump) 
-1000 10  10 	val 	JRNC val (carry=0 jump) 
-1000 10  11 	val 	JRM  val (sign=1 jump) 
-1000 11  00 	val 	JRP  val (sign=0 jump) 
-1000 11  01 	val 	JRZ  val (zero=1 jump) 
-1000 11  10 	val 	JRNZ val (zero=0 jump) 
-1000 11  11 	val 	???
+1000 10  00     val     JR   val (unconditionally jump)
+1000 10  01     val     JRC  val (carry=1 jump)
+1000 10  10     val     JRNC val (carry=0 jump)
+1000 10  11     val     JRM  val (sign=1 jump)
+1000 11  00     val     JRP  val (sign=0 jump)
+1000 11  01     val     JRZ  val (zero=1 jump)
+1000 11  10     val     JRNZ val (zero=0 jump)
+1000 11  11     val     ???
 
-1001 xx  xx 	val		JUMP val
+1001 high       low     JUMP addr
 
-1010 xx	 xx 	val 	CALL val
+1010 high       low     CALL addr
 
-1011 xx	 xx 	val 	MOV SP,val
+1011 high       low     MOV SP,addr
 
 1100 xx  reg    val     IN reg,[val]
 1101 xx  reg    val     OUT [val],reg

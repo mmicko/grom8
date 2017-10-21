@@ -3,13 +3,13 @@
 #include "Vgrom_computer.h"
 #include "verilated.h"
 
-int main(int argc, char **argv, char **env) 
+int main(int argc, char **argv, char **env)
 {
 	Verilated::commandArgs(argc, argv);
 	std::unique_ptr<Vgrom_computer> top = std::make_unique<Vgrom_computer>();
 
 	top->clk = 0;
-	top->reset = 1;	
+	top->reset = 1;
 	top->clk ^= 1; top->eval();
 	top->clk ^= 1; top->eval();
 	top->reset = 0;
@@ -19,6 +19,10 @@ int main(int argc, char **argv, char **env)
 	{
 		top->clk ^= 1; top->eval();
 		top->clk ^= 1; top->eval();
-		//printf("%02x\n",top->display_out);
+		if (top->hlt)
+		{
+			printf("%02x\n",top->display_out);
+			break;
+		}
 	}
 }
