@@ -323,7 +323,7 @@ module grom_cpu(
 																	end
 															2'b10 : begin
 																	`ifdef DISASSEMBLY
-																	$display("RET");
+																	$display("Unused opcode");
 																	`endif
 																	end
 															2'b11 : begin
@@ -348,7 +348,7 @@ module grom_cpu(
 																	end
 															2'b10 : begin
 																	`ifdef DISASSEMBLY
-																	$display("Unused opcode");
+																	$display("RET");
 																	`endif
 																	end
 															2'b11 : begin

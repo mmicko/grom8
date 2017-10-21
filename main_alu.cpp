@@ -38,10 +38,9 @@ TEST_CASE("Test ALU_OP_ADD", "ALU")
 {
 	std::unique_ptr<Valu> top = std::make_unique<Valu>();
 	top->clk = 0;
-	uint8_t A = 0x00;	
-	while(true)
+	for(int A=0;A<0x100;A++)
 	{		
-		uint8_t B = 0;
+		for(int B=0;B<0x100;B++)
 		{
 			top->A = A;
 			top->B = B;
@@ -50,12 +49,118 @@ TEST_CASE("Test ALU_OP_ADD", "ALU")
 			top->clk ^= 1; top->eval();
 			uint8_t res = A + B;			
 			REQUIRE(res==top->result);
-
-			if (B==0xff) break;
-			B=B+1;						
+			REQUIRE(((res==0) ? 1:0)==top->ZF);
+			REQUIRE((((A + B)>0xff) ? 1 : 0 )==top->CF);
+			REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
 		}
-		if (A==0xff) break;
-		A=A+1;
+	}
+}
+
+
+TEST_CASE("Test ALU_OP_ADC", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	for(int A=0;A<0x100;A++)
+	{		
+		for(int B=0;B<0x100;B++)
+		{
+			// Set CF to 0
+			{
+				top->B = 0;
+				top->operation = ALU_OP_INC;
+				top->clk ^= 1; top->eval();
+				top->clk ^= 1; top->eval();
+			}
+			
+			top->A = A;
+			top->B = B;
+			top->operation = ALU_OP_ADC;
+			top->clk ^= 1; top->eval();
+			top->clk ^= 1; top->eval();
+			uint8_t res = A + B;			
+			CHECK(res==top->result);
+			CHECK(((res==0) ? 1:0)==top->ZF);
+			CHECK((((A + B)>0xff) ? 1 : 0 )==top->CF);
+			CHECK(((res & 0x80) ? 1 : 0) == top->SF);
+		}
+	}
+	
+	for(int A=0;A<0x100;A++)
+	{		
+		for(int B=0;B<0x100;B++)
+		{
+			// Set CF to 1
+			{
+				top->B = 0;
+				top->operation = ALU_OP_DEC;
+				top->clk ^= 1; top->eval();
+				top->clk ^= 1; top->eval();
+			}
+			top->A = A;
+			top->B = B;
+			top->operation = ALU_OP_ADC;
+			int res = A + B + 1;	
+			top->clk ^= 1; top->eval();
+			top->clk ^= 1; top->eval();
+			REQUIRE((res&0xff)==top->result);
+			REQUIRE((((res&0xff)==0) ? 1:0)==top->ZF);
+			REQUIRE((((res)>0xff) ? 1 : 0 )==top->CF);
+			REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+		}
+	}
+}
+
+
+TEST_CASE("Test ALU_OP_SUB", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	for(int A=0;A<0x100;A++)
+	{		
+		for(int B=0;B<0x100;B++)
+		{
+			top->A = A;
+			top->B = B;
+			top->operation = ALU_OP_SUB;
+			top->clk ^= 1; top->eval();
+			top->clk ^= 1; top->eval();
+			uint8_t res = A - B;			
+			REQUIRE(res==top->result);
+			REQUIRE(((res==0) ? 1:0)==top->ZF);
+			REQUIRE((((A - B)<0) ? 1 : 0 )==top->CF);
+			REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+		}
+	}
+}
+
+TEST_CASE("Test ALU_OP_SBC", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	for(int A=0;A<0x100;A++)
+	{		
+		for(int B=0;B<0x100;B++)
+		{
+			// Set CF to 1
+			{
+				top->B = 0;
+				top->operation = ALU_OP_DEC;
+				top->clk ^= 1; top->eval();
+				top->clk ^= 1; top->eval();
+			}
+			REQUIRE(1==top->CF);
+			top->A = A;
+			top->B = B;
+			top->operation = ALU_OP_SBC;
+			int res = A - B - 1;	
+			top->clk ^= 1; top->eval();
+			top->clk ^= 1; top->eval();
+			REQUIRE((res&0xff)==top->result);
+			REQUIRE((((res&0xff)==0) ? 1:0)==top->ZF);
+			REQUIRE((((res)<0) ? 1 : 0 )==top->CF);
+			REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+		}
 	}
 }
 
@@ -63,16 +168,170 @@ TEST_CASE("Test ALU_OP_INC", "ALU")
 {
 	std::unique_ptr<Valu> top = std::make_unique<Valu>();
 	top->clk = 0;
-	uint8_t B = 0x00;	
-	while(true)
-	{		
+	top->A = 0;
+	for(int B=0;B<0x100;B++)
+	{
 		top->B = B;
 		top->operation = ALU_OP_INC;
 		top->clk ^= 1; top->eval();
 		top->clk ^= 1; top->eval();
-		uint8_t res = B + 1;			
+		
+		uint8_t res = B + 1;
+		
 		REQUIRE(res==top->result);
-		if (B==0xff) break;
-		B=B+1;						
+		REQUIRE(((res==0) ? 1:0)==top->ZF);
+		REQUIRE(((B==0xff) ? 1 : 0 )==top->CF);
+		REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+	}
+}
+
+TEST_CASE("Test ALU_OP_DEC", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	top->A = 0;
+	for(int B=0;B<0x100;B++)
+	{	
+		top->B = B;
+		top->operation = ALU_OP_DEC;
+		top->clk ^= 1; top->eval();
+		top->clk ^= 1; top->eval();
+		
+		uint8_t res = B - 1;
+		
+		REQUIRE(res==top->result);
+		REQUIRE(((res==0) ? 1:0)==top->ZF);
+		REQUIRE(((B==0) ? 1 : 0 )==top->CF);
+		REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+	}
+}
+
+TEST_CASE("Test ALU_OP_AND", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	for(int A=0;A<0x100;A++)
+	{		
+		for(int B=0;B<0x100;B++)
+		{
+			top->A = A;
+			top->B = B;
+			top->operation = ALU_OP_AND;
+			top->clk ^= 1; top->eval();
+			top->clk ^= 1; top->eval();
+			uint8_t res = A & B;			
+			REQUIRE(res==top->result);			
+			REQUIRE(((res==0) ? 1:0)==top->ZF);
+			REQUIRE(0==top->CF);
+			REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+		}
+	}
+}
+
+TEST_CASE("Test ALU_OP_OR", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	for(int A=0;A<0x100;A++)
+	{		
+		for(int B=0;B<0x100;B++)
+		{
+			top->A = A;
+			top->B = B;
+			top->operation = ALU_OP_OR;
+			top->clk ^= 1; top->eval();
+			top->clk ^= 1; top->eval();
+			uint8_t res = A | B;			
+			REQUIRE(res==top->result);			
+			REQUIRE(((res==0) ? 1:0)==top->ZF);
+			REQUIRE(0==top->CF);
+			REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+		}
+	}
+}
+
+
+TEST_CASE("Test ALU_OP_XOR", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	for(int A=0;A<0x100;A++)
+	{		
+		for(int B=0;B<0x100;B++)
+		{
+			top->A = A;
+			top->B = B;
+			top->operation = ALU_OP_XOR;
+			top->clk ^= 1; top->eval();
+			top->clk ^= 1; top->eval();
+			uint8_t res = A ^ B;			
+			REQUIRE(res==top->result);			
+			REQUIRE(((res==0) ? 1:0)==top->ZF);
+			REQUIRE(0==top->CF);
+			REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+		}
+	}
+}
+
+TEST_CASE("Test ALU_OP_NOT", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	for(int B=0;B<0x100;B++)
+	{
+		top->A = 0;
+		top->B = B;
+		top->operation = ALU_OP_NOT;
+		top->clk ^= 1; top->eval();
+		top->clk ^= 1; top->eval();
+		uint8_t res = ~B;			
+		REQUIRE(res==top->result);			
+		REQUIRE(((res==0) ? 1:0)==top->ZF);
+		REQUIRE(0==top->CF);
+		REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+	}
+}
+
+TEST_CASE("Test ALU_OP_CMP", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	for(int A=0;A<0x100;A++)
+	{		
+		for(int B=0;B<0x100;B++)
+		{
+			top->A = A;
+			top->B = B;
+			top->operation = ALU_OP_CMP;
+			top->clk ^= 1; top->eval();
+			top->clk ^= 1; top->eval();
+			uint8_t res = A - B;			
+			REQUIRE(A==top->result);
+			REQUIRE(((res==0) ? 1:0)==top->ZF);
+			REQUIRE((((A - B)<0) ? 1 : 0 )==top->CF);
+			REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+		}
+	}
+}
+
+TEST_CASE("Test ALU_OP_TST", "ALU") 
+{
+	std::unique_ptr<Valu> top = std::make_unique<Valu>();
+	top->clk = 0;
+	for(int A=0;A<0x100;A++)
+	{		
+		for(int B=0;B<0x100;B++)
+		{
+			top->A = A;
+			top->B = B;
+			top->operation = ALU_OP_TST;
+			top->clk ^= 1; top->eval();
+			top->clk ^= 1; top->eval();
+			uint8_t res = A & B;			
+			REQUIRE(A==top->result);			
+			REQUIRE(((res==0) ? 1:0)==top->ZF);
+			REQUIRE(0==top->CF);
+			REQUIRE(((res & 0x80) ? 1 : 0) == top->SF);
+		}
 	}
 }

@@ -52,7 +52,7 @@ module alu(
 			ALU_OP_OR :
 				tmp = {1'b0, A | B };
 			ALU_OP_NOT :
-				tmp = {1'b0, ~A };
+				tmp = {1'b0, ~B };
 			ALU_OP_XOR :
 				tmp = {1'b0, A ^ B};
 			ALU_OP_INC :
@@ -85,7 +85,7 @@ module alu(
 		endcase
 
 		CF <= tmp[8];
-		ZF <= tmp == 0;
+		ZF <= tmp[7:0] == 0;
 		SF <= tmp[7];
 
 		if (operation[4:1] == 4'b0101)
