@@ -1,26 +1,10 @@
 module test();
 	reg clk = 0;
-	wire [11:0] addr;
-	wire [7:0] memory_out;
-	wire [7:0] memory_in;
-	wire mem_enable;
-	wire we;
-	wire m1;
 	reg reset;
+	wire [7:0] display_out;
+	wire hlt;
 
-	grom_cpu cpu(.clk(clk),.reset(reset),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq),.m1(m1));
-
-	assign mem_enable = we & ~ioreq;
-
-	ram_memory memory(.clk(clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out),.memreq(~ioreq));
-
-	always @(posedge clk)
-	begin
-		if(ioreq==1 && we==1 && addr==12'h000)
-		begin
-			$display("out: %h",memory_in);			
-		end
-	end
+	grom_computer cpu(.clk(clk),.reset(reset),.hlt(hlt),.display_out(display_out));
 
 	always
 		#(5) clk <= !clk;

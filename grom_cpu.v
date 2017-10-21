@@ -6,7 +6,6 @@ module grom_cpu(
 	output reg [7:0] data_out,
 	output reg we,
 	output reg ioreq,
-	output reg m1,
 	output reg hlt
 );
 
@@ -34,7 +33,7 @@ module grom_cpu(
 
 	reg [7:0]  alu_a;
 	reg [7:0]  alu_b;
-	reg [3:0]  alu_op;
+	reg [4:0]  alu_op;
 	
 	reg [1:0]  RESULT_REG;
 	
@@ -42,6 +41,7 @@ module grom_cpu(
 	wire alu_C;
 	wire alu_Z;
 	wire alu_S;
+	reg jump;
 	
 	alu alu(.A(alu_a),.B(alu_b),.operation(alu_op),.result(alu_res),.C(alu_C),.Z(alu_Z),.S(alu_S));
 	
@@ -74,14 +74,11 @@ module grom_cpu(
 						we    <= 0;
 						ioreq <= 0;
 						
-						m1	  <= 1;
-
 						state <= STATE_FETCH_WAIT;
 					end
 
 				STATE_FETCH_WAIT :
 					begin
-						m1	  <= 0;
 						// Sync with memory due to CLK
 						state <= (hlt) ? STATE_FETCH_PREP : STATE_FETCH;
 					end
@@ -192,7 +189,7 @@ module grom_cpu(
 											alu_a   <= R[0];      // first input R0
 											// no 2nd input
 											RESULT_REG <= 0;         // result in R0
-											alu_op  <= { 2'b10, IR[3:0] };
+											alu_op  <= { 2'b10, IR[2:0] };
 											case(IR[2:0])
 												3'b000 : begin													
 														$display("SHL");
@@ -348,7 +345,6 @@ module grom_cpu(
 								begin
 								if (IR[3]==0)
 									begin
-										integer jump = 0;
 										case(IR[2:0])
 											3'b000 :
 												begin
@@ -403,7 +399,6 @@ module grom_cpu(
 									end
 								else
 									begin
-										integer jump = 0;
 										case(IR[2:0])
 											3'b000 :
 												begin
@@ -501,12 +496,12 @@ module grom_cpu(
 									case(IR[1:0])
 										2'b00 : begin
 												$display("MOV CS,0x%h",VALUE);
-												CS <= VALUE;
+												CS <= VALUE[3:0];
 												state <= STATE_FETCH_PREP;									
 												end
 										2'b01 : begin
 												$display("MOV DS,0x%h",VALUE);
-												DS <= VALUE;
+												DS <= VALUE[3:0];
 												state <= STATE_FETCH_PREP;									
 												end
 										2'b10 : begin

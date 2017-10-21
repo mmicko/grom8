@@ -1,7 +1,7 @@
 module alu(
 	input [7:0] A,
 	input [7:0] B,
-	input [3:0] operation,
+	input [4:0] operation,
 	output reg [7:0] result,
 	output reg C,
 	output reg Z,
@@ -52,13 +52,15 @@ module alu(
 				end
 			ALU_OP_ADC :
 				begin
-					{C, result } = A + B + C;
+					//{C, result } = A + B + C;
+					{C, result } = A + B;
 					Z = result == 0;
 					S = result[7];
 				end
 			ALU_OP_SBC :
 				begin
-					{C, result } = A - B - C;
+					//{C, result } = A - B - C;
+					{C, result } = A - B;
 					Z = result == 0;
 					S = result[7];
 				end

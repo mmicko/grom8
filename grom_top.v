@@ -24,32 +24,10 @@ module grom_top
    output o_Segment2_G
    );
 
- reg [31:0] counter = 0;
-
- reg prev = 0;
-
- wire [11:0] addr;
- wire [7:0] memory_out;
- wire [7:0] memory_in;
- wire mem_enable;
- wire  we;
- wire ioreq;
- wire  hlt;
+ wire [7:0] display_out;
+ wire hlt;
  
- reg [7:0] display_out = 8'h00;
-
- grom_cpu cpu(.clk(i_Clk),.reset(i_Switch_1),.addr(addr),.data_in(memory_out),.data_out(memory_in),.we(we),.ioreq(ioreq),.hlt(hlt));
-
- assign mem_enable = we & ~ioreq;
- ram_memory memory(.clk(i_Clk),.addr(addr),.data_in(memory_in),.we(mem_enable),.data_out(memory_out),.memreq(~ioreq));
- 
- always @(posedge i_Clk)
-	begin
-		if(ioreq==1 && we==1)
-		begin
-			display_out <= memory_in;
-		end
-	end
+ grom_computer cpu(.clk(i_Clk),.reset(i_Switch_1),.hlt(hlt),.display_out(display_out));
 	
  hex_to_7seg upper_digit
   (.i_Clk(i_Clk),
