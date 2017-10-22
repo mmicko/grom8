@@ -706,7 +706,7 @@ module grom_cpu(
 					end
 				STATE_RET_VALUE :
 					begin
-						FUTURE_PC <= data_in;
+						FUTURE_PC <= { 4'b0000, data_in };
 						we    <= 0;
 						state <= STATE_RET_VALUE_WAIT2;
 
@@ -722,7 +722,7 @@ module grom_cpu(
 					end
 				STATE_RET_VALUE2 :
 					begin
-						FUTURE_PC <= FUTURE_PC | data_in << 8;
+						FUTURE_PC <= FUTURE_PC | ({ 4'b0000, data_in } << 8);
 						we    <= 0;
 						state <= STATE_JUMP;
 					end

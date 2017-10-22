@@ -21,16 +21,19 @@ clean:
 	$(RM) -f grom.blif grom.txt grom.bin grom.out rotor.out abc.history grom.vcd
 	$(RM) -f -r obj_dir
 
-run: obj_dir/Vgrom_computer
-	obj_dir/Vgrom_computer
+run: obj_dir/computer/Vgrom_computer
+	obj_dir/computer/Vgrom_computer
 
-runalu: obj_dir/Valu
-	obj_dir/Valu
+runalu: obj_dir/alu/Valu
+	obj_dir/alu/Valu
 
-obj_dir/Vgrom_computer: grom8.vlt grom_computer.v ram_memory.v grom_cpu.v alu.v main.cpp
-	verilator_bin -Wall --top-module grom_computer --cc grom8.vlt grom_computer.v ram_memory.v grom_cpu.v alu.v --exe main.cpp
-	make -C obj_dir -j -f Vgrom_computer.mk Vgrom_computer VERILATOR_ROOT=C:/msys64/opt/share/verilator CXXFLAGS=-Wno-attributes
+obj_dir:
+	mkdir obj_dir
 
-obj_dir/Valu: grom8.vlt alu.v main.cpp
-	verilator_bin -Wall --top-module alu --cc grom8.vlt alu.v --exe main_alu.cpp
-	make -C obj_dir -j -f Valu.mk Valu VERILATOR_ROOT=C:/msys64/opt/share/verilator CXXFLAGS=-Wno-attributes
+obj_dir/computer/Vgrom_computer: obj_dir grom8.vlt grom_computer.v ram_memory.v grom_cpu.v alu.v main.cpp
+	verilator_bin -Wall --Mdir obj_dir/computer --top-module grom_computer --cc grom8.vlt grom_computer.v ram_memory.v grom_cpu.v alu.v --exe main.cpp
+	make -C obj_dir/computer -j -f Vgrom_computer.mk Vgrom_computer VERILATOR_ROOT=C:/msys64/opt/share/verilator CXXFLAGS=-Wno-attributes VM_USER_DIR=..\..
+
+obj_dir/alu/Valu: obj_dir grom8.vlt alu.v main.cpp
+	verilator_bin -Wall --Mdir obj_dir/alu --top-module alu --cc grom8.vlt alu.v --exe main_alu.cpp
+	make -C obj_dir/alu -j -f Valu.mk Valu VERILATOR_ROOT=C:/msys64/opt/share/verilator CXXFLAGS=-Wno-attributes VM_USER_DIR=..\..
