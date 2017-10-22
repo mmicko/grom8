@@ -11,6 +11,7 @@ module ram_memory(
   initial
   begin
 	$readmemh("boot.mem", store);
+`ifndef VERILATOR	
 	store[0] <= 8'b11100001; // MOV DS,2
 	store[1] <= 8'b00000010; //
 	store[2] <= 8'b01010100; // LOAD R1,[R0]
@@ -28,7 +29,7 @@ module ram_memory(
 	store[256] <= 8'b11010001; // OUT [0],R1
 	store[257] <= 8'b00000000; //
 	store[258] <= 8'b01111110; // RET
-
+`endif
   end
 
   always @(posedge clk)

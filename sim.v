@@ -1,4 +1,4 @@
-module test();
+module sim();
 	reg clk = 0;
 	reg reset;
 	wire [7:0] display_out;
@@ -12,7 +12,7 @@ module test();
 	initial
 	begin
 		$dumpfile("grom.vcd");
-		$dumpvars(0,test);
+		$dumpvars(0,sim);
 		reset = 1;
 		#20
 		reset = 0;

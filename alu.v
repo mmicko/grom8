@@ -9,30 +9,30 @@ module alu(
 	output reg SF
 );
 
-	parameter ALU_OP_ADD = 5'b00000;
-	parameter ALU_OP_SUB = 5'b00001;
-	parameter ALU_OP_ADC = 5'b00010;
-	parameter ALU_OP_SBC = 5'b00011;
+	parameter ALU_OP_ADD /* verilator public_flat */ = 5'b00000;
+	parameter ALU_OP_SUB /* verilator public_flat */ = 5'b00001;
+	parameter ALU_OP_ADC /* verilator public_flat */ = 5'b00010;
+	parameter ALU_OP_SBC /* verilator public_flat */ = 5'b00011;
 
-	parameter ALU_OP_AND = 5'b00100;
-	parameter ALU_OP_OR  = 5'b00101;
-	parameter ALU_OP_NOT = 5'b00110;
-	parameter ALU_OP_XOR = 5'b00111;
+	parameter ALU_OP_AND /* verilator public_flat */ = 5'b00100;
+	parameter ALU_OP_OR  /* verilator public_flat */ = 5'b00101;
+	parameter ALU_OP_NOT /* verilator public_flat */ = 5'b00110;
+	parameter ALU_OP_XOR /* verilator public_flat */ = 5'b00111;
 
-	parameter ALU_OP_INC = 5'b01000;
-	parameter ALU_OP_DEC = 5'b01001;
-	parameter ALU_OP_CMP = 5'b01010;
-	parameter ALU_OP_TST = 5'b01011;
+	parameter ALU_OP_INC /* verilator public_flat */ = 5'b01000;
+	parameter ALU_OP_DEC /* verilator public_flat */ = 5'b01001;
+	parameter ALU_OP_CMP /* verilator public_flat */ = 5'b01010;
+	parameter ALU_OP_TST /* verilator public_flat */ = 5'b01011;
 
-	parameter ALU_OP_SHL = 5'b10000;
-	parameter ALU_OP_SHR = 5'b10001;
-	parameter ALU_OP_SAL = 5'b10010;
-	parameter ALU_OP_SAR = 5'b10011;
+	parameter ALU_OP_SHL /* verilator public_flat */ = 5'b10000;
+	parameter ALU_OP_SHR /* verilator public_flat */ = 5'b10001;
+	parameter ALU_OP_SAL /* verilator public_flat */ = 5'b10010;
+	parameter ALU_OP_SAR /* verilator public_flat */ = 5'b10011;
 
-	parameter ALU_OP_ROL = 5'b10100;
-	parameter ALU_OP_ROR = 5'b10101;
-	parameter ALU_OP_RCL = 5'b10110;
-	parameter ALU_OP_RCR = 5'b10111;
+	parameter ALU_OP_ROL /* verilator public_flat */ = 5'b10100;
+	parameter ALU_OP_ROR /* verilator public_flat */ = 5'b10101;
+	parameter ALU_OP_RCL /* verilator public_flat */ = 5'b10110;
+	parameter ALU_OP_RCR /* verilator public_flat */ = 5'b10111;
 
 	reg [8:0] tmp;
 

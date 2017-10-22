@@ -9,46 +9,46 @@ module grom_cpu(
 	output reg hlt
 );
 
-	reg[11:0] PC;    // Program counter
-	reg[7:0] IR;     // Instruction register
-	reg[7:0] VALUE;   // Temp reg for storing 2nd operand
-	reg[3:0] CS;    // Code segment regiser
-	reg[3:0] DS;    // Data segment regiser
-	reg[11:0] SP;    // Stack pointer regiser
-	reg[7:0] R[0:3]; // General purpose registers
-	reg[11:0] FUTURE_PC;   // PC to jump to
+	reg[11:0] PC /* verilator public_flat */;    		// Program counter
+	reg[7:0] IR /* verilator public_flat */;    	    // Instruction register
+	reg[7:0] VALUE /* verilator public_flat */;   		// Temp reg for storing 2nd operand
+	reg[3:0] CS /* verilator public_flat */;    		// Code segment regiser
+	reg[3:0] DS /* verilator public_flat */;    		// Data segment regiser
+	reg[11:0] SP /* verilator public_flat */;    		// Stack pointer regiser
+	reg[7:0] R[0:3] /* verilator public_flat */; 		// General purpose registers
+	reg[11:0] FUTURE_PC /* verilator public_flat */;    // PC to jump to
 
-	parameter STATE_RESET             = 5'b00000;
-	parameter STATE_FETCH_PREP        = 5'b00001;
-	parameter STATE_FETCH_WAIT        = 5'b00010;
-	parameter STATE_FETCH             = 5'b00011;
-	parameter STATE_EXECUTE           = 5'b00100;
-	parameter STATE_FETCH_VALUE_PREP  = 5'b00101;
-	parameter STATE_FETCH_VALUE       = 5'b00110;
-	parameter STATE_EXECUTE_DBL       = 5'b00111;
-	parameter STATE_LOAD_VALUE        = 5'b01000;
-	parameter STATE_LOAD_VALUE_WAIT   = 5'b01001;
-	parameter STATE_ALU_RESULT_WAIT   = 5'b01010;
-	parameter STATE_ALU_RESULT        = 5'b01011;
-	parameter STATE_PUSH_PC_LOW       = 5'b01100;
-	parameter STATE_JUMP              = 5'b01101;
-	parameter STATE_RET_VALUE_WAIT    = 5'b01110;
-	parameter STATE_RET_VALUE         = 5'b01111;
-	parameter STATE_RET_VALUE_WAIT2   = 5'b10000;
-	parameter STATE_RET_VALUE2        = 5'b10001;
+	parameter STATE_RESET             /*verilator public_flat*/ = 5'b00000;
+	parameter STATE_FETCH_PREP        /*verilator public_flat*/ = 5'b00001;
+	parameter STATE_FETCH_WAIT        /*verilator public_flat*/ = 5'b00010;
+	parameter STATE_FETCH             /*verilator public_flat*/ = 5'b00011;
+	parameter STATE_EXECUTE           /*verilator public_flat*/ = 5'b00100;
+	parameter STATE_FETCH_VALUE_PREP  /*verilator public_flat*/ = 5'b00101;
+	parameter STATE_FETCH_VALUE       /*verilator public_flat*/ = 5'b00110;
+	parameter STATE_EXECUTE_DBL       /*verilator public_flat*/ = 5'b00111;
+	parameter STATE_LOAD_VALUE        /*verilator public_flat*/ = 5'b01000;
+	parameter STATE_LOAD_VALUE_WAIT   /*verilator public_flat*/ = 5'b01001;
+	parameter STATE_ALU_RESULT_WAIT   /*verilator public_flat*/ = 5'b01010;
+	parameter STATE_ALU_RESULT        /*verilator public_flat*/ = 5'b01011;
+	parameter STATE_PUSH_PC_LOW       /*verilator public_flat*/ = 5'b01100;
+	parameter STATE_JUMP              /*verilator public_flat*/ = 5'b01101;
+	parameter STATE_RET_VALUE_WAIT    /*verilator public_flat*/ = 5'b01110;
+	parameter STATE_RET_VALUE         /*verilator public_flat*/ = 5'b01111;
+	parameter STATE_RET_VALUE_WAIT2   /*verilator public_flat*/ = 5'b10000;
+	parameter STATE_RET_VALUE2        /*verilator public_flat*/ = 5'b10001;
 
-	reg [4:0] state = STATE_RESET;
+	reg [4:0] state /* verilator public_flat */ = STATE_RESET;
 
-	reg [7:0]  alu_a;
-	reg [7:0]  alu_b;
-	reg [4:0]  alu_op;
+	reg [7:0]  alu_a /* verilator public_flat */;
+	reg [7:0]  alu_b /* verilator public_flat */;
+	reg [4:0]  alu_op /* verilator public_flat */;
 
-	reg [1:0]  RESULT_REG;
+	reg [1:0]  RESULT_REG /* verilator public_flat */;
 
-	wire [7:0] alu_res;
-	wire alu_CF;
-	wire alu_ZF;
-	wire alu_SF;
+	wire [7:0] alu_res /* verilator public_flat */;
+	wire alu_CF /* verilator public_flat */;
+	wire alu_ZF /* verilator public_flat */;
+	wire alu_SF /* verilator public_flat */;
 	reg jump;
 
 	alu alu(.clk(clk),.A(alu_a),.B(alu_b),.operation(alu_op),.result(alu_res),.CF(alu_CF),.ZF(alu_ZF),.SF(alu_SF));
