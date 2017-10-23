@@ -262,7 +262,7 @@ module grom_cpu(
 											else
 											begin
 												`ifdef DISASSEMBLY
-												$display("IR %h POP R%d",IR,IR[1:0]);
+												$display("POP R%d",IR[1:0]);
 												`endif
 												addr  <= SP + 1;
 												we    <= 0;
