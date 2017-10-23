@@ -41,7 +41,7 @@ module grom_cpu(
 
 	reg [7:0]  alu_a /* verilator public_flat */;
 	reg [7:0]  alu_b /* verilator public_flat */;
-	reg [4:0]  alu_op /* verilator public_flat */;
+	reg [3:0]  alu_op /* verilator public_flat */;
 
 	reg [1:0]  RESULT_REG /* verilator public_flat */;
 
@@ -125,7 +125,7 @@ module grom_cpu(
 										alu_a   <= R[0];      // first input R0
 										alu_b   <= R[IR[1:0]];
 										RESULT_REG <= 0;         // result in R0
-										alu_op  <= { 3'b000, IR[3:2] };
+										alu_op  <= { 2'b00, IR[3:2] };
 
 										state   <= STATE_ALU_RESULT_WAIT;
 
@@ -151,7 +151,7 @@ module grom_cpu(
 										alu_a   <= R[0];      // first input R0
 										alu_b   <= R[IR[1:0]];
 										RESULT_REG <= 0;         // result in R0
-										alu_op  <= { 3'b001, IR[3:2] };
+										alu_op  <= { 2'b01, IR[3:2] };
 										state   <= STATE_ALU_RESULT_WAIT;
 										`ifdef DISASSEMBLY
 										case(IR[3:2])
@@ -172,29 +172,40 @@ module grom_cpu(
 									end
 								3'b011 :
 									begin
-										alu_a   <= R[0];       // first  input R0
-										alu_b   <= R[IR[1:0]]; // second input REG
-										RESULT_REG <= IR[1:0];    // result in REG
-										alu_op  <= {3'b010, IR[3:2] };
-
-										// CMP and TEST are not storing result
+										RESULT_REG <= IR[1:0];  // result in REG
+										// CMP and TEST are not storing result										
 										state   <= IR[3] ? STATE_FETCH_PREP : STATE_ALU_RESULT_WAIT;
-										`ifdef DISASSEMBLY
+										// CMP and TEST are having first input R0, for INC and DEC is REG
+										alu_a   <= IR[3] ? R[0] : R[IR[1:0]];								
+										// CMP and TEST are having second input REG, for INC and DEC is 1
+										alu_b   <= IR[3] ? R[IR[1:0]] : 8'b00000001;								
+
 										case(IR[3:2])
 											2'b00 : begin
+													`ifdef DISASSEMBLY
 													$display("INC R%d",IR[1:0]);
+													`endif
+													alu_op  <= 4'b0000;     // ALU_OP_ADD
 													end
 											2'b01 : begin
+													`ifdef DISASSEMBLY
 													$display("DEC R%d",IR[1:0]);
+													`endif
+													alu_op  <= 4'b0001;     // ALU_OP_SUB
 													end
 											2'b10 : begin
+													`ifdef DISASSEMBLY
 													$display("CMP R%d",IR[1:0]);
+													`endif
+													alu_op  <= 4'b0001;     // ALU_OP_SUB
 													end
 											2'b11 : begin
+													`ifdef DISASSEMBLY
 													$display("TST R%d",IR[1:0]);
+													`endif
+													alu_op  <= 4'b0100;     // ALU_OP_AND
 													end
 										endcase
-										`endif
 									end
 								3'b100 :
 									begin
@@ -203,7 +214,7 @@ module grom_cpu(
 											alu_a   <= R[0];      // first input R0
 											// no 2nd input
 											RESULT_REG <= 0;         // result in R0
-											alu_op  <= { 2'b10, IR[2:0] };
+											alu_op  <= { 1'b1, IR[2:0] };
 											`ifdef DISASSEMBLY
 											case(IR[2:0])
 												3'b000 : begin

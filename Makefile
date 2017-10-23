@@ -1,8 +1,8 @@
 ifeq ($(OS),Windows_NT)
-SILENT_OUT := >nul 2>nul
+SILENT_OUT := >nul
 EXE	:= .exe
 else
-SILENT_OUT := >/dev/null 2>/dev/null
+SILENT_OUT := >/dev/null
 EXE	:=
 endif
 .PHONY: all sim clean prog test test_alu test_cpu test_comp
