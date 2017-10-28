@@ -27,7 +27,7 @@ module grom_top
  wire [7:0] display_out;
  wire hlt;
 
- grom_computer cpu(.clk(i_Clk),.reset(i_Switch_1),.hlt(hlt),.display_out(display_out));
+ grom_computer computer(.clk(i_Clk),.reset(i_Switch_1),.hlt(hlt),.display_out(display_out));
 
  hex_to_7seg upper_digit
   (.i_Clk(i_Clk),
