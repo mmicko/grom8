@@ -18,24 +18,24 @@ module grom_cpu(
 	reg[7:0] R[0:3] /* verilator public_flat */; 		// General purpose registers
 	reg[11:0] FUTURE_PC /* verilator public_flat */;    // PC to jump to
 
-	parameter STATE_RESET             /*verilator public_flat*/ = 5'b00000;
-	parameter STATE_FETCH_PREP        /*verilator public_flat*/ = 5'b00001;
-	parameter STATE_FETCH_WAIT        /*verilator public_flat*/ = 5'b00010;
-	parameter STATE_FETCH             /*verilator public_flat*/ = 5'b00011;
-	parameter STATE_EXECUTE           /*verilator public_flat*/ = 5'b00100;
-	parameter STATE_FETCH_VALUE_PREP  /*verilator public_flat*/ = 5'b00101;
-	parameter STATE_FETCH_VALUE       /*verilator public_flat*/ = 5'b00110;
-	parameter STATE_EXECUTE_DBL       /*verilator public_flat*/ = 5'b00111;
-	parameter STATE_LOAD_VALUE        /*verilator public_flat*/ = 5'b01000;
-	parameter STATE_LOAD_VALUE_WAIT   /*verilator public_flat*/ = 5'b01001;
-	parameter STATE_ALU_RESULT_WAIT   /*verilator public_flat*/ = 5'b01010;
-	parameter STATE_ALU_RESULT        /*verilator public_flat*/ = 5'b01011;
-	parameter STATE_PUSH_PC_LOW       /*verilator public_flat*/ = 5'b01100;
-	parameter STATE_JUMP              /*verilator public_flat*/ = 5'b01101;
-	parameter STATE_RET_VALUE_WAIT    /*verilator public_flat*/ = 5'b01110;
-	parameter STATE_RET_VALUE         /*verilator public_flat*/ = 5'b01111;
-	parameter STATE_RET_VALUE_WAIT2   /*verilator public_flat*/ = 5'b10000;
-	parameter STATE_RET_VALUE2        /*verilator public_flat*/ = 5'b10001;
+	localparam STATE_RESET             /*verilator public_flat*/ = 5'b00000;
+	localparam STATE_FETCH_PREP        /*verilator public_flat*/ = 5'b00001;
+	localparam STATE_FETCH_WAIT        /*verilator public_flat*/ = 5'b00010;
+	localparam STATE_FETCH             /*verilator public_flat*/ = 5'b00011;
+	localparam STATE_EXECUTE           /*verilator public_flat*/ = 5'b00100;
+	localparam STATE_FETCH_VALUE_PREP  /*verilator public_flat*/ = 5'b00101;
+	localparam STATE_FETCH_VALUE       /*verilator public_flat*/ = 5'b00110;
+	localparam STATE_EXECUTE_DBL       /*verilator public_flat*/ = 5'b00111;
+	localparam STATE_LOAD_VALUE        /*verilator public_flat*/ = 5'b01000;
+	localparam STATE_LOAD_VALUE_WAIT   /*verilator public_flat*/ = 5'b01001;
+	localparam STATE_ALU_RESULT_WAIT   /*verilator public_flat*/ = 5'b01010;
+	localparam STATE_ALU_RESULT        /*verilator public_flat*/ = 5'b01011;
+	localparam STATE_PUSH_PC_LOW       /*verilator public_flat*/ = 5'b01100;
+	localparam STATE_JUMP              /*verilator public_flat*/ = 5'b01101;
+	localparam STATE_RET_VALUE_WAIT    /*verilator public_flat*/ = 5'b01110;
+	localparam STATE_RET_VALUE         /*verilator public_flat*/ = 5'b01111;
+	localparam STATE_RET_VALUE_WAIT2   /*verilator public_flat*/ = 5'b10000;
+	localparam STATE_RET_VALUE2        /*verilator public_flat*/ = 5'b10001;
 
 	reg [4:0] state /* verilator public_flat */ = STATE_RESET;
 

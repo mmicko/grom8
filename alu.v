@@ -9,25 +9,25 @@ module alu(
 	output reg SF
 );
 
-	parameter ALU_OP_ADD /* verilator public_flat */ = 4'b0000;
-	parameter ALU_OP_SUB /* verilator public_flat */ = 4'b0001;
-	parameter ALU_OP_ADC /* verilator public_flat */ = 4'b0010;
-	parameter ALU_OP_SBC /* verilator public_flat */ = 4'b0011;
+	localparam ALU_OP_ADD /* verilator public_flat */ = 4'b0000;
+	localparam ALU_OP_SUB /* verilator public_flat */ = 4'b0001;
+	localparam ALU_OP_ADC /* verilator public_flat */ = 4'b0010;
+	localparam ALU_OP_SBC /* verilator public_flat */ = 4'b0011;
 
-	parameter ALU_OP_AND /* verilator public_flat */ = 4'b0100;
-	parameter ALU_OP_OR  /* verilator public_flat */ = 4'b0101;
-	parameter ALU_OP_NOT /* verilator public_flat */ = 4'b0110;
-	parameter ALU_OP_XOR /* verilator public_flat */ = 4'b0111;
+	localparam ALU_OP_AND /* verilator public_flat */ = 4'b0100;
+	localparam ALU_OP_OR  /* verilator public_flat */ = 4'b0101;
+	localparam ALU_OP_NOT /* verilator public_flat */ = 4'b0110;
+	localparam ALU_OP_XOR /* verilator public_flat */ = 4'b0111;
 
-	parameter ALU_OP_SHL /* verilator public_flat */ = 4'b1000;
-	parameter ALU_OP_SHR /* verilator public_flat */ = 4'b1001;
-	parameter ALU_OP_SAL /* verilator public_flat */ = 4'b1010;
-	parameter ALU_OP_SAR /* verilator public_flat */ = 4'b1011;
+	localparam ALU_OP_SHL /* verilator public_flat */ = 4'b1000;
+	localparam ALU_OP_SHR /* verilator public_flat */ = 4'b1001;
+	localparam ALU_OP_SAL /* verilator public_flat */ = 4'b1010;
+	localparam ALU_OP_SAR /* verilator public_flat */ = 4'b1011;
 
-	parameter ALU_OP_ROL /* verilator public_flat */ = 4'b1100;
-	parameter ALU_OP_ROR /* verilator public_flat */ = 4'b1101;
-	parameter ALU_OP_RCL /* verilator public_flat */ = 4'b1110;
-	parameter ALU_OP_RCR /* verilator public_flat */ = 4'b1111;
+	localparam ALU_OP_ROL /* verilator public_flat */ = 4'b1100;
+	localparam ALU_OP_ROR /* verilator public_flat */ = 4'b1101;
+	localparam ALU_OP_RCL /* verilator public_flat */ = 4'b1110;
+	localparam ALU_OP_RCR /* verilator public_flat */ = 4'b1111;
 
 	reg [8:0] tmp;
 
