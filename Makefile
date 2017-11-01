@@ -17,8 +17,8 @@ grom.bin: grom_top.v hex_to_7seg.v grom_computer.v ram_memory.v grom_cpu.v alu.v
 	icepack grom.txt grom.bin
 	icetime -d hx1k -P vq100 grom.txt
 
-grom.out: sim.v ram_memory.v alu.v grom_cpu.v grom_computer.v 
-	iverilog -D DISASSEMBLY -o grom.out sim.v ram_memory.v alu.v grom_cpu.v grom_computer.v
+grom.out: grom_computer_tb.v ram_memory.v alu.v grom_cpu.v grom_computer.v 
+	iverilog -D DISASSEMBLY -o grom.out grom_computer_tb.v ram_memory.v alu.v grom_cpu.v grom_computer.v
 
 prog: grom.bin
 	iceprog grom.bin

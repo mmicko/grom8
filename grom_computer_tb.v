@@ -1,5 +1,5 @@
 `timescale 1ns/1ps 
-module sim();
+module grom_computer_tb();
 	reg clk = 0;
 	reg reset;
 	wire [7:0] display_out;
@@ -12,8 +12,8 @@ module sim();
 
 	initial
 	begin
-		$dumpfile("grom.vcd");
-		$dumpvars(0,sim);
+		$dumpfile("grom_computer_tb.vcd");
+		$dumpvars(0,grom_computer_tb);
 		reset = 1;
 		#20
 		reset = 0;
