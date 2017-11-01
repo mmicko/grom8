@@ -1,0 +1,36 @@
+CAPI=1
+[main]
+name = ::grom8:0
+backend = icestorm
+simulators = icarus isim modelsim
+
+[fileset rtl]
+files =
+ grom_top.v
+ hex_to_7seg.v
+ grom_computer.v
+ ram_memory.v
+ grom_cpu.v 
+ alu.v
+ boot.mem[is_include_file]
+file_type = verilogSource
+
+[fileset rtl_tb]
+files = grom_computer_tb.v[file_type=verilogSource]
+usage = sim
+
+[fileset contraints]
+files = Go_Board_Constraints.pcf[file_type=PCF]
+
+[icestorm]
+top_module = grom_top
+yosys_synth_options = -abc2
+arachne_pnr_options = -d 1k -P vq100
+
+[simulator]
+toplevel = grom_computer_tb
+
+[scripts]
+pre_build_scripts = copy_boot_mem.sh
+pre_synth_scripts = copy_boot_mem.sh
+
