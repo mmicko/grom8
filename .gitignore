@@ -5,3 +5,10 @@
 /grom.out
 /grom.txt
 /grom.vcd
+
+*.dblite
+*.asc
+*.bin
+*.blif
+*.out
+*.vcd
