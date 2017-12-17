@@ -43,12 +43,13 @@ obj_dir:
 
 obj_dir/computer/Vgrom_computer$(EXE): obj_dir grom8.vlt grom_computer.v ram_memory.v grom_cpu.v alu.v test_comp.cpp
 	@verilator_bin -Wall --Mdir obj_dir/computer --top-module grom_computer --cc grom8.vlt grom_computer.v ram_memory.v grom_cpu.v alu.v --exe test_comp.cpp
-	@make -C obj_dir/computer -j -f Vgrom_computer.mk Vgrom_computer CXXFLAGS=-Wno-attributes VM_USER_DIR=..\.. $(SILENT_OUT)
+	@make -C obj_dir/computer -j -f Vgrom_computer.mk Vgrom_computer CC=gcc CXXFLAGS=-Wno-attributes VM_USER_DIR=../.. $(SILENT_OUT)
 
 obj_dir/alu/Valu$(EXE): obj_dir grom8.vlt alu.v test_alu.cpp
 	@verilator_bin -Wall --Mdir obj_dir/alu --top-module alu --cc grom8.vlt alu.v --exe test_alu.cpp
-	@make -C obj_dir/alu -j -f Valu.mk Valu CXXFLAGS=-Wno-attributes VM_USER_DIR=..\.. $(SILENT_OUT)
+	@make -C obj_dir/alu -j -f Valu.mk Valu CC=gcc CXXFLAGS=-Wno-attributes VM_USER_DIR=../.. $(SILENT_OUT)
 
 obj_dir/cpu/Vgrom_cpu$(EXE): obj_dir grom8.vlt grom_cpu.v alu.v test_cpu.cpp
 	@verilator_bin -Wall --Mdir obj_dir/cpu --top-module grom_cpu --cc grom8.vlt grom_cpu.v alu.v --exe test_cpu.cpp
-	@make -C obj_dir/cpu -j -f Vgrom_cpu.mk Vgrom_cpu CXXFLAGS=-Wno-attributes VM_USER_DIR=..\.. $(SILENT_OUT)
+	@make -C obj_dir/cpu -j -f Vgrom_cpu.mk Vgrom_cpu CXXFLAGS=-Wno-attributes VM_USER_DIR=../.. $(SILENT_OUT)
+
